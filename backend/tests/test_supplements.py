@@ -13,7 +13,6 @@ def test_supplement_crud(auth_client):
     supps = auth_client.get("/api/supplements").json()
     assert len(supps) == 1
     assert supps[0]["ingredients"][0]["ingredient_code"] == "omega3"
-    schedule_id = supps[0]["schedules"][0]["id"]
 
     # replace wholesale
     updated = dict(SUPP, product_name="오메가3 골드",
@@ -35,6 +34,31 @@ def test_supplement_crud(auth_client):
     # soft delete
     assert auth_client.delete(f"/api/supplements/{sid}").status_code == 204
     assert auth_client.get("/api/supplements").json() == []
+
+
+def test_intake_validation(auth_client):
+    res = auth_client.post("/api/supplements", json=SUPP)
+    assert res.status_code == 201
+
+    supps = auth_client.get("/api/supplements").json()
+    schedule_id = supps[0]["schedules"][0]["id"]
+
+    # invalid status returns 422
+    res = auth_client.post("/api/intake", json={
+        "schedule_id": schedule_id, "date": "2026-07-29",
+        "status": "invalid"})
+    assert res.status_code == 422
+
+    # non-existent schedule_id returns 404
+    res = auth_client.post("/api/intake", json={
+        "schedule_id": 999999, "date": "2026-07-29",
+        "status": "taken"})
+    assert res.status_code == 404
+
+
+def test_put_missing_supplement_404(auth_client):
+    res = auth_client.put("/api/supplements/999999", json=SUPP)
+    assert res.status_code == 404
 
 
 def test_supplements_require_auth(client):
