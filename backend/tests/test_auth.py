@@ -24,6 +24,16 @@ def test_login_non_ascii_password(client, monkeypatch):
     assert res.status_code == 401
 
 
+def test_login_rate_limited_after_repeated_failures(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "myhub_password", "changeme")
+    for _ in range(5):
+        res = client.post("/api/auth/login", json={"password": "wrong"})
+        assert res.status_code == 401
+    res = client.post("/api/auth/login", json={"password": "changeme"})
+    assert res.status_code == 429
+
+
 def test_profile_upsert(auth_client):
     assert auth_client.get("/api/profile").json() == {
         "name": "", "sex": None, "birth_date": None}

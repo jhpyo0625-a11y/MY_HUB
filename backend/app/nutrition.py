@@ -1,10 +1,13 @@
 import json
+import logging
 import re
 
 import httpx
 from openai import OpenAI
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
 
 NUTRIENT_KEYS = [
     "kcal", "carb_g", "protein_g", "fat_g", "fiber_g", "sugar_g",
@@ -55,6 +58,7 @@ def _mfds_lookup(name: str, grams: float) -> dict | None:
                 out[key] = round(float(raw) * factor, 2)
         return out if out["kcal"] is not None else None
     except Exception:
+        logger.warning("MFDS lookup failed for %r", name, exc_info=True)
         return None  # any failure → fall through to next source
 
 
@@ -77,6 +81,7 @@ def _ai_estimate(name: str, amount: str) -> dict | None:
                     else None)
                 for k in NUTRIENT_KEYS}
     except Exception:
+        logger.warning("AI nutrient estimate failed for %r", name, exc_info=True)
         return None
 
 

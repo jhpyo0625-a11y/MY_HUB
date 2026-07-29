@@ -72,6 +72,22 @@ def test_ai_fallback(monkeypatch):
     assert values["kcal"] == 1.0
 
 
+def test_mfds_lookup_failure_is_logged(monkeypatch, caplog):
+    from app import nutrition
+    from app.config import settings
+    monkeypatch.setattr(settings, "mfds_api_key", "test-key")
+    monkeypatch.setattr(settings, "openai_api_key", "")
+
+    def boom(*a, **kw):
+        raise RuntimeError("network down")
+    monkeypatch.setattr(nutrition.httpx, "get", boom)
+
+    with caplog.at_level("WARNING"):
+        values, source = nutrition.resolve_nutrients("김치찌개", "200g")
+    assert (values, source) == (None, "none")
+    assert "MFDS lookup failed" in caplog.text
+
+
 def test_no_sources_configured(monkeypatch):
     from app import nutrition
     from app.config import settings

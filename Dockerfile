@@ -13,7 +13,8 @@ COPY backend/app ./app
 COPY --from=fe /fe/dist ./static
 ENV MYHUB_STATIC_DIR=/app/static \
     MYHUB_DATA_DIR=/app/data \
-    MYHUB_COOKIE_SECURE=true
+    MYHUB_COOKIE_SECURE=true \
+    MYHUB_ENV=production
 VOLUME /app/data
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

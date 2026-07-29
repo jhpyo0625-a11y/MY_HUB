@@ -1,4 +1,5 @@
 import secrets
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from itsdangerous import BadSignature, SignatureExpired, TimestampSigner
@@ -8,6 +9,14 @@ from .config import settings
 
 COOKIE_NAME = "myhub_session"
 MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_WINDOW_SECONDS = 60
+_failed_attempts: dict[str, list[float]] = {}
+
+
+def reset_login_attempts() -> None:
+    _failed_attempts.clear()
 
 
 def _signer() -> TimestampSigner:
@@ -22,9 +31,17 @@ class LoginIn(BaseModel):
 
 
 @router.post("/login")
-def login(body: LoginIn, response: Response):
+def login(body: LoginIn, request: Request, response: Response):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    attempts = [t for t in _failed_attempts.get(ip, []) if now - t < LOGIN_WINDOW_SECONDS]
+    if len(attempts) >= LOGIN_MAX_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="너무 많은 로그인 시도입니다. 잠시 후 다시 시도하세요")
     if not secrets.compare_digest(body.password.encode(), settings.myhub_password.encode()):
+        attempts.append(now)
+        _failed_attempts[ip] = attempts
         raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않습니다")
+    _failed_attempts.pop(ip, None)
     token = _signer().sign(b"ok").decode()
     response.set_cookie(COOKIE_NAME, token, max_age=MAX_AGE,
                         httponly=True, samesite="lax",

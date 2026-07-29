@@ -22,18 +22,21 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    if settings.myhub_cookie_secure and (
+    defaults_in_use = (
         settings.myhub_secret_key == "dev-secret-change-in-prod"
         or settings.myhub_password == "changeme"
-    ):
+    )
+    if defaults_in_use and (settings.myhub_cookie_secure or settings.myhub_env != "development"):
         raise RuntimeError(
-            "Production (MYHUB_COOKIE_SECURE=true) requires MYHUB_SECRET_KEY "
-            "and MYHUB_PASSWORD to be set to non-default values."
+            "Production (MYHUB_COOKIE_SECURE=true or MYHUB_ENV!=development) "
+            "requires MYHUB_SECRET_KEY and MYHUB_PASSWORD to be set to "
+            "non-default values."
         )
 
     app = FastAPI(title="MyHub", lifespan=lifespan)
 
     from . import auth
+    auth.reset_login_attempts()
     app.include_router(auth.router)
     app.include_router(auth.profile_router)
 
