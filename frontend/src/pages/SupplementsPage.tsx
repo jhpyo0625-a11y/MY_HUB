@@ -90,6 +90,8 @@ function SuppForm({ initial, onSaved, onCancel }: {
                   className="border border-slate-200 rounded-lg px-2 text-sm">
             {UNITS.map((u) => <option key={u}>{u}</option>)}
           </select>
+          <button onClick={() => setForm({ ...form, ingredients: form.ingredients.filter((_, i) => i !== idx) })}
+                  className="text-xs text-slate-400">✕</button>
         </div>
       ))}
       <button onClick={() => setForm({ ...form, ingredients: [...form.ingredients, { ingredient_code: "", amount: 0, unit: "mg" }] })}
@@ -114,9 +116,13 @@ function SuppForm({ initial, onSaved, onCancel }: {
                    onChange={(e) => setForm({ ...form, schedules: form.schedules.map((x, i) => i === si ? { ...x, servings: Number(e.target.value) } : x) })}
                    className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm" />
             <span className="text-xs text-slate-500">회분</span>
+            <button onClick={() => setForm({ ...form, schedules: form.schedules.filter((_, i) => i !== si) })}
+                    className="text-xs text-slate-400">✕</button>
           </div>
         </div>
       ))}
+      <button onClick={() => setForm({ ...form, schedules: [...form.schedules, { days_of_week: "0123456", time_of_day: "09:00", servings: 1 }] })}
+              className="text-sm text-sky-600 py-1">+ 스케줄 추가</button>
 
       <div className="flex gap-2 pt-2">
         <button onClick={onCancel} className="flex-1 border border-slate-300 rounded-lg py-2 text-sm">취소</button>
