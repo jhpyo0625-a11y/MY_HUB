@@ -109,3 +109,26 @@ def test_intake_unique_constraint(db_session_factory):
     db.add(IntakeLog(schedule_id=schedule_id, date=test_date, status="taken"))
     with pytest.raises(IntegrityError):
         db.commit()
+
+
+def test_evidence_and_safety_models_roundtrip(db_session_factory):
+    from app.models import Analysis, EvidenceRef, InteractionRule, NutrientLimit
+
+    db = db_session_factory()
+
+    ev = EvidenceRef(type="KDRI", nutrient_code="vitamin_d",
+                     claim_summary="비타민D 권장 섭취량",
+                     source_url="https://www.mohw.go.kr", reliability_grade="A")
+    db.add(ev)
+    db.commit()
+
+    db.add(NutrientLimit(ingredient_code="vitamin_d", unit="ug", rda=10, ul=100,
+                         sex="ALL", evidence_id=ev.id))
+    db.add(InteractionRule(ingredient_a="calcium", ingredient_b="iron",
+                           reason="흡수 저해 가능", evidence_id=ev.id))
+    db.add(Analysis(trigger="manual", result='{"summary": "ok"}'))
+    db.commit()
+
+    assert db.query(NutrientLimit).one().evidence_id == ev.id
+    assert db.query(InteractionRule).one().ingredient_b == "iron"
+    assert db.query(Analysis).one().trigger == "manual"

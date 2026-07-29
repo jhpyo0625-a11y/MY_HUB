@@ -99,3 +99,41 @@ class IntakeLog(Base):
     schedule_id: Mapped[int] = mapped_column(ForeignKey("supplement_schedules.id"))
     date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String)  # taken | skipped
+
+
+class EvidenceRef(Base):
+    __tablename__ = "evidence_refs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String)             # KDRI | NIH_ODS | UL | interaction_rule
+    nutrient_code: Mapped[str] = mapped_column(String)
+    claim_summary: Mapped[str] = mapped_column(Text)
+    source_url: Mapped[str] = mapped_column(String, default="")
+    reliability_grade: Mapped[str] = mapped_column(String)  # A | B | C
+
+
+class NutrientLimit(Base):
+    __tablename__ = "nutrient_limits"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_code: Mapped[str] = mapped_column(String)
+    unit: Mapped[str] = mapped_column(String)
+    rda: Mapped[float | None] = mapped_column(Float)
+    ul: Mapped[float | None] = mapped_column(Float)
+    sex: Mapped[str] = mapped_column(String, default="ALL")  # ALL | M | F
+    evidence_id: Mapped[int | None] = mapped_column(ForeignKey("evidence_refs.id"))
+
+
+class InteractionRule(Base):
+    __tablename__ = "interaction_rules"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_a: Mapped[str] = mapped_column(String)
+    ingredient_b: Mapped[str] = mapped_column(String)
+    reason: Mapped[str] = mapped_column(Text)
+    evidence_id: Mapped[int | None] = mapped_column(ForeignKey("evidence_refs.id"))
+
+
+class Analysis(Base):
+    __tablename__ = "analyses"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    trigger: Mapped[str] = mapped_column(String)  # manual | weekly
+    result: Mapped[str] = mapped_column(Text)     # JSON — see analysis.AnalysisResult

@@ -11,10 +11,11 @@ async def lifespan(app: FastAPI):
     init_db()
 
     from .db import SessionLocal
-    from .seed import seed_metric_definitions
+    from .seed import seed_evidence_and_limits, seed_metric_definitions
     db = SessionLocal()
     try:
         seed_metric_definitions(db)
+        seed_evidence_and_limits(db)
     finally:
         db.close()
 
