@@ -65,13 +65,15 @@ def test_sex_specific_limit_overrides_all(db_session_factory):
     from app.routers.safety import compute_safety_warnings
     db = db_session_factory()
     s1 = _make_supplement(db, "철분", "iron", 40, "mg")
-    lim_all = NutrientLimit(ingredient_code="iron", unit="mg", rda=10, ul=45, sex="ALL")
+    lim_all = NutrientLimit(ingredient_code="iron", unit="mg", rda=10, ul=30, sex="ALL")
     lim_f = NutrientLimit(ingredient_code="iron", unit="mg", rda=14, ul=45, sex="F")
     db.add_all([lim_all, lim_f])
     db.commit()
 
+    # 40mg >= ALL's ul=30 (would wrongly flag overdose if sex override were broken)
+    # but 40mg < F's ul=45 (correct: F row overrides ALL row)
     warnings = compute_safety_warnings([s1], [lim_all, lim_f], [], "F")
-    assert not any(w["type"] == "overdose" for w in warnings)  # 40mg < 45mg UL
+    assert not any(w["type"] == "overdose" for w in warnings)
 
 
 def test_interaction_flagged_when_both_present(db_session_factory):
