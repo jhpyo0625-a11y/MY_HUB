@@ -8,6 +8,9 @@ def test_parse_grams():
     assert _parse_grams("0.5kg") == 500
     assert _parse_grams("1공기") is None
     assert _parse_grams("") is None
+    assert _parse_grams("1.2.3g") is None
+    assert _parse_grams("..kg") is None
+    assert _parse_grams("abcg") is None
 
 
 def test_mfds_lookup_scaling(monkeypatch):

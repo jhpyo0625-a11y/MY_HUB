@@ -25,7 +25,7 @@ MFDS_FIELD_MAP = {  # our key -> API field, values per 100g
     "vitamin_a_ug": "AMT_NUM14", "vitamin_c_mg": "AMT_NUM21",
 }
 
-_GRAMS_RE = re.compile(r"^\s*([\d.]+)\s*(g|kg)\s*$", re.IGNORECASE)
+_GRAMS_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*(g|kg)\s*$", re.IGNORECASE)
 
 
 def _parse_grams(amount: str) -> float | None:
