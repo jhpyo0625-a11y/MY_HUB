@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     mfds_api_key: str = ""
     openai_api_key: str = ""
     openai_model_mini: str = "gpt-5-mini"
+    openai_model_strong: str = "gpt-5"
 
     @property
     def db_path(self) -> Path:
