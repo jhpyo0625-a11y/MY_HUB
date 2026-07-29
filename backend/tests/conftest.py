@@ -34,3 +34,12 @@ def client(db_session_factory):
     app.dependency_overrides[get_db] = override_get_db
     # plain TestClient (no `with`) does NOT run lifespan — no file DB side effects in tests
     return TestClient(app)
+
+
+@pytest.fixture()
+def auth_client(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "myhub_password", "changeme")
+    res = client.post("/api/auth/login", json={"password": "changeme"})
+    assert res.status_code == 200
+    return client

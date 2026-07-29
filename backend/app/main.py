@@ -14,6 +14,10 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="MyHub", lifespan=lifespan)
 
+    from . import auth
+    app.include_router(auth.router)
+    app.include_router(auth.profile_router)
+
     @app.get("/api/health")
     def health():
         return {"ok": True}
