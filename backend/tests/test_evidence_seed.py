@@ -43,7 +43,7 @@ def test_interaction_rules_cite_interaction_evidence(db_session_factory):
     referenced_evidence_ids = set()
     for rule in rules:
         assert rule.evidence_id is not None
-        ev = db.query(EvidenceRef).get(rule.evidence_id)
+        ev = db.get(EvidenceRef, rule.evidence_id)
         assert ev is not None
         assert ev.type == "interaction_rule"
         assert ev.nutrient_code == expected_nutrient_code[rule.ingredient_a]
