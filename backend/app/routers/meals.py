@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_auth
 from ..db import get_db
 from ..models import Meal, MealItem
+from ..nutrition import resolve_nutrients
 
 router = APIRouter(prefix="/api/meals", tags=["meals"],
                    dependencies=[Depends(require_auth)])
@@ -42,8 +43,13 @@ def meal_to_dict(m: Meal) -> dict:
 @router.post("", status_code=201)
 def create_meal(body: MealIn, db: Session = Depends(get_db)):
     meal = Meal(eaten_at=body.eaten_at, dish_name=body.dish_name, note=body.note)
+    # ponytail: sync resolution; move to background task if saving feels slow
     for it in body.items:
-        meal.items.append(MealItem(name=it.name, amount=it.amount))
+        values, source = resolve_nutrients(it.name, it.amount)
+        meal.items.append(MealItem(
+            name=it.name, amount=it.amount,
+            nutrients=json.dumps(values) if values else None,
+            nutrient_source=source))
     db.add(meal)
     db.commit()
     return {"id": meal.id}
