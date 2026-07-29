@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     myhub_secret_key: str = "dev-secret-change-in-prod"
     myhub_data_dir: Path = Path("data")
     myhub_static_dir: Path = Path("static")
+    myhub_cookie_secure: bool = False
     mfds_api_key: str = ""
     openai_api_key: str = ""
     openai_model_mini: str = "gpt-5-mini"

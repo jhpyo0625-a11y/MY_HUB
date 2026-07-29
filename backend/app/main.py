@@ -37,6 +37,20 @@ def create_app() -> FastAPI:
     def health():
         return {"ok": True}
 
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    from .config import settings
+
+    static_dir = settings.myhub_static_dir
+    if static_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=static_dir / "assets"),
+                  name="assets")
+
+        @app.get("/{path:path}")
+        def spa(path: str):
+            return FileResponse(static_dir / "index.html")
+
     return app
 
 

@@ -27,7 +27,8 @@ def login(body: LoginIn, response: Response):
         raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않습니다")
     token = _signer().sign(b"ok").decode()
     response.set_cookie(COOKIE_NAME, token, max_age=MAX_AGE,
-                        httponly=True, samesite="lax")
+                        httponly=True, samesite="lax",
+                        secure=settings.myhub_cookie_secure)
     return {"ok": True}
 
 
