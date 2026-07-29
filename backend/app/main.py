@@ -27,7 +27,8 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(auth.profile_router)
 
-    from .routers import metrics
+    from .routers import meals, metrics
+    app.include_router(meals.router)
     app.include_router(metrics.router)
 
     @app.get("/api/health")
