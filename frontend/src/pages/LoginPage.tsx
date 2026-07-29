@@ -14,7 +14,7 @@ export default function LoginPage() {
         method: "POST",
         body: JSON.stringify({ password }),
       });
-      navigate("/data");
+      navigate("/dashboard");
     } catch {
       setError("비밀번호가 올바르지 않습니다");
     }
