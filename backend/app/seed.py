@@ -122,13 +122,17 @@ def seed_evidence_and_limits(db: Session) -> None:
         return  # static seed set — whole-function idempotency is enough here
 
     by_nutrient: dict[str, int] = {}
+    by_interaction: dict[str, int] = {}
     for type_, nutrient_code, claim, url, grade in EVIDENCE_REFS:
         ev = EvidenceRef(type=type_, nutrient_code=nutrient_code,
                          claim_summary=claim, source_url=url,
                          reliability_grade=grade)
         db.add(ev)
         db.flush()
-        by_nutrient.setdefault(nutrient_code, ev.id)
+        if type_ == "interaction_rule":
+            by_interaction.setdefault(nutrient_code, ev.id)
+        else:
+            by_nutrient.setdefault(nutrient_code, ev.id)
 
     for code, unit, rda, ul, sex, ev_code in NUTRIENT_LIMITS:
         db.add(NutrientLimit(ingredient_code=code, unit=unit, rda=rda, ul=ul,
@@ -136,5 +140,5 @@ def seed_evidence_and_limits(db: Session) -> None:
 
     for a, b, reason, ev_code in INTERACTION_RULES:
         db.add(InteractionRule(ingredient_a=a, ingredient_b=b, reason=reason,
-                               evidence_id=by_nutrient.get(ev_code)))
+                               evidence_id=by_interaction.get(ev_code)))
     db.commit()
