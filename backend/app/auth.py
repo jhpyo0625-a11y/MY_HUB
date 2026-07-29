@@ -23,7 +23,7 @@ class LoginIn(BaseModel):
 
 @router.post("/login")
 def login(body: LoginIn, response: Response):
-    if not secrets.compare_digest(body.password, settings.myhub_password):
+    if not secrets.compare_digest(body.password.encode(), settings.myhub_password.encode()):
         raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않습니다")
     token = _signer().sign(b"ok").decode()
     response.set_cookie(COOKIE_NAME, token, max_age=MAX_AGE,

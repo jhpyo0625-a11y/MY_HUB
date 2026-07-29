@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from .config import settings
 from .db import init_db
 
 
@@ -21,6 +22,15 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    if settings.myhub_cookie_secure and (
+        settings.myhub_secret_key == "dev-secret-change-in-prod"
+        or settings.myhub_password == "changeme"
+    ):
+        raise RuntimeError(
+            "Production (MYHUB_COOKIE_SECURE=true) requires MYHUB_SECRET_KEY "
+            "and MYHUB_PASSWORD to be set to non-default values."
+        )
+
     app = FastAPI(title="MyHub", lifespan=lifespan)
 
     from . import auth
@@ -40,15 +50,17 @@ def create_app() -> FastAPI:
     from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
 
-    from .config import settings
-
     static_dir = settings.myhub_static_dir
     if static_dir.is_dir():
-        app.mount("/assets", StaticFiles(directory=static_dir / "assets"),
-                  name="assets")
+        if (static_dir / "assets").is_dir():
+            app.mount("/assets", StaticFiles(directory=static_dir / "assets"),
+                      name="assets")
 
         @app.get("/{path:path}")
         def spa(path: str):
+            candidate = static_dir / path
+            if path and candidate.is_file():
+                return FileResponse(candidate)
             return FileResponse(static_dir / "index.html")
 
     return app
