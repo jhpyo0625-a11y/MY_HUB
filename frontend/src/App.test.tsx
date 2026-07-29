@@ -23,4 +23,5 @@ test("renders tab bar", () => {
   expect(nav.getByText("내 데이터")).toBeDefined();
   expect(nav.getByText("캘린더")).toBeDefined();
   expect(nav.getByText("영양제")).toBeDefined();
+  expect(nav.getByText("리포트")).toBeDefined();
 });

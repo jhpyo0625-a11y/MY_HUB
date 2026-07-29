@@ -3,11 +3,13 @@ import LoginPage from "./pages/LoginPage";
 import MyDataPage from "./pages/MyDataPage";
 import CalendarPage from "./pages/CalendarPage";
 import SupplementsPage from "./pages/SupplementsPage";
+import ReportPage from "./pages/ReportPage";
 
 const TABS = [
   { to: "/data", label: "내 데이터", icon: "📊" },
   { to: "/calendar", label: "캘린더", icon: "📅" },
   { to: "/supplements", label: "영양제", icon: "💊" },
+  { to: "/report", label: "리포트", icon: "📄" },
 ];
 
 function TabBar() {
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/data" element={<MyDataPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/supplements" element={<SupplementsPage />} />
+          <Route path="/report" element={<ReportPage />} />
           <Route path="*" element={<Navigate to="/data" replace />} />
         </Routes>
         <TabBar />
