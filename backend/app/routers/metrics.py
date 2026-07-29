@@ -21,8 +21,7 @@ def list_definitions(db: Session = Depends(get_db)):
             for d in defs]
 
 
-@router.get("/latest")
-def latest_per_metric(db: Session = Depends(get_db)):
+def latest_metrics_dict(db: Session) -> dict:
     entries = (db.query(MetricEntry)
                .order_by(MetricEntry.measured_at.asc()).all())
     out: dict[str, dict] = {}
@@ -31,6 +30,11 @@ def latest_per_metric(db: Session = Depends(get_db)):
                               "value_text": e.value_text,
                               "measured_at": e.measured_at.isoformat()}
     return out
+
+
+@router.get("/latest")
+def latest_per_metric(db: Session = Depends(get_db)):
+    return latest_metrics_dict(db)
 
 
 @router.get("/entries")
