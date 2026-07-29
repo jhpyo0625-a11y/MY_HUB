@@ -1,9 +1,11 @@
 import pytest
 
+from app.seed import seed_metric_definitions, METRIC_DEFINITIONS
+from app.models import MetricDefinition
+
 
 @pytest.fixture()
 def seeded_client(auth_client, db_session_factory):
-    from app.seed import seed_metric_definitions
     db = db_session_factory()
     seed_metric_definitions(db)
     db.close()
@@ -21,6 +23,14 @@ def test_definitions_seeded(seeded_client):
 
 def test_requires_auth(client):
     assert client.get("/api/metrics/definitions").status_code == 401
+
+
+def test_seed_idempotent(db_session_factory):
+    db = db_session_factory()
+    seed_metric_definitions(db)
+    seed_metric_definitions(db)
+    assert db.query(MetricDefinition).count() == len(METRIC_DEFINITIONS)
+    db.close()
 
 
 def test_entry_roundtrip_and_latest(seeded_client):
@@ -54,3 +64,6 @@ def test_entry_validation(seeded_client):
     # text metric works
     assert seeded_client.post("/api/metrics/entries", json={
         "metric_code": "medications", "value_text": "혈압약"}).status_code == 201
+    # text metric without value_text
+    assert seeded_client.post("/api/metrics/entries", json={
+        "metric_code": "conditions"}).status_code == 422
