@@ -4,8 +4,10 @@ import MyDataPage from "./pages/MyDataPage";
 import CalendarPage from "./pages/CalendarPage";
 import SupplementsPage from "./pages/SupplementsPage";
 import ReportPage from "./pages/ReportPage";
+import DashboardPage from "./pages/DashboardPage";
 
 const TABS = [
+  { to: "/dashboard", label: "대시보드", icon: "🏠" },
   { to: "/data", label: "내 데이터", icon: "📊" },
   { to: "/calendar", label: "캘린더", icon: "📅" },
   { to: "/supplements", label: "영양제", icon: "💊" },
@@ -41,11 +43,12 @@ export default function App() {
       <div className="min-h-screen bg-slate-50 pb-20 text-slate-800">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/data" element={<MyDataPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/supplements" element={<SupplementsPage />} />
           <Route path="/report" element={<ReportPage />} />
-          <Route path="*" element={<Navigate to="/data" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <TabBar />
       </div>
