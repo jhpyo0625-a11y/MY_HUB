@@ -47,29 +47,29 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+    <div className="space-y-3 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm shadow-slate-200/50">
       <div className="flex gap-2">
         <input value={dish} onChange={(e) => setDish(e.target.value)}
                placeholder="음식 이름 (예: 김치찌개)"
-               className="flex-1 border border-slate-300 rounded-lg px-3 py-2" />
+               className="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-900 focus:outline-none" />
         <input type="time" value={time} onChange={(e) => setTime(e.target.value)}
-               className="border border-slate-300 rounded-lg px-2" />
+               className="rounded-lg border border-slate-300 px-2" />
       </div>
       {items.map((it, idx) => (
         <div key={idx} className="flex gap-2">
           <input value={it.name} placeholder="재료"
                  onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
-                 className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                 className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
           <input value={it.amount} placeholder="양 (예: 100g, 반 모)"
                  onChange={(e) => setItems(items.map((x, i) => i === idx ? { ...x, amount: e.target.value } : x))}
-                 className="w-32 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                 className="w-32 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
         </div>
       ))}
       <div className="flex gap-2">
         <button onClick={() => setItems([...items, { name: "", amount: "" }])}
-                className="text-sm text-sky-600 py-2">+ 재료 추가</button>
+                className="py-2 text-sm font-medium text-teal-700">+ 재료 추가</button>
         <button onClick={save} disabled={saving || !dish.trim()}
-                className="ml-auto bg-sky-600 text-white rounded-lg px-4 py-2 text-sm disabled:opacity-40">
+                className="ml-auto rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-40">
           {saving ? "영양성분 계산 중…" : "저장"}
         </button>
       </div>
@@ -95,42 +95,48 @@ function DayDetail({ date, meals, slots, reload }: {
   }
 
   return (
-    <div className="space-y-4">
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-500">영양제</h3>
+    <div className="space-y-5">
+      <section className="space-y-2.5">
+        <h3 className="font-display text-base font-bold text-slate-800">영양제</h3>
         {slots.length === 0 && <p className="text-sm text-slate-400">예정된 영양제가 없습니다</p>}
         {slots.map((s) => (
-          <div key={s.schedule_id} className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-2">
-            <span className="text-sm">{s.time} · {s.supplement_name} {s.servings > 1 ? `×${s.servings}` : ""}</span>
-            <div className="ml-auto flex gap-1">
+          <div key={s.schedule_id}
+               className="flex items-center gap-3 rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-sm shadow-slate-200/50">
+            <span className="font-mono text-sm text-slate-400 tabular-nums">{s.time}</span>
+            <span className="text-sm font-medium text-slate-800">
+              {s.supplement_name}{s.servings > 1 ? <span className="text-slate-400"> ×{s.servings}</span> : null}
+            </span>
+            <div className="ml-auto flex gap-1.5">
               <button onClick={() => setIntake(s, "taken")}
-                      className={`px-3 py-2 rounded-lg text-sm ${s.status === "taken" ? "bg-emerald-500 text-white" : "border border-slate-300"}`}>
+                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${s.status === "taken" ? "bg-emerald-500 text-white" : "border border-slate-300 text-slate-600"}`}>
                 복용 ✓
               </button>
               <button onClick={() => setIntake(s, "skipped")}
-                      className={`px-3 py-2 rounded-lg text-sm ${s.status === "skipped" ? "bg-slate-400 text-white" : "border border-slate-300"}`}>
+                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${s.status === "skipped" ? "bg-slate-400 text-white" : "border border-slate-300 text-slate-600"}`}>
                 건너뜀
               </button>
             </div>
           </div>
         ))}
       </section>
-      <section className="space-y-2">
+      <section className="space-y-2.5">
         <div className="flex items-center">
-          <h3 className="text-sm font-semibold text-slate-500">식사</h3>
-          <button onClick={() => setAdding(!adding)} className="ml-auto text-sm text-sky-600 py-2">
+          <h3 className="font-display text-base font-bold text-slate-800">식사</h3>
+          <button onClick={() => setAdding(!adding)} className="ml-auto py-2 text-sm font-medium text-teal-700">
             {adding ? "닫기" : "+ 식사 기록"}
           </button>
         </div>
         {adding && <AddMealForm date={date} onDone={() => { setAdding(false); reload(); }} />}
         {meals.map((m) => (
-          <div key={m.id} className="bg-white rounded-xl shadow-sm p-3">
+          <div key={m.id} className="rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-sm shadow-slate-200/50">
             <div className="flex items-center">
-              <span className="font-medium">{m.eaten_at.slice(11, 16)} · {m.dish_name}</span>
-              <button onClick={() => removeMeal(m.id)} className="ml-auto text-xs text-slate-400 py-2">삭제</button>
+              <span className="font-medium text-slate-800">
+                <span className="font-mono text-sm text-slate-400">{m.eaten_at.slice(11, 16)}</span> · {m.dish_name}
+              </span>
+              <button onClick={() => removeMeal(m.id)} className="ml-auto py-2 text-xs text-slate-400">삭제</button>
             </div>
             {m.items.length > 0 && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="mt-1 text-xs text-slate-500">
                 {m.items.map((i) => `${i.name}${i.nutrient_source === "ai_estimate" ? "*" : ""}`).join(", ")}
               </p>
             )}
@@ -177,28 +183,31 @@ export default function CalendarPage() {
     arr.filter((x) => String(x[key]).slice(0, 10) === d);
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-bold">캘린더</h1>
-        <div className="ml-auto flex rounded-lg border border-slate-300 overflow-hidden text-sm">
+    <div className="mx-auto max-w-lg space-y-4 px-4 pb-4 pt-6">
+      <header className="flex items-end justify-between">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-teal-700/60">Calendar</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold leading-none text-slate-900">캘린더</h1>
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-slate-300 text-sm">
           {(["month", "week", "day"] as View[]).map((v) => (
             <button key={v} onClick={() => setView(v)}
-                    className={`px-3 py-2 ${view === v ? "bg-sky-600 text-white" : "bg-white"}`}>
+                    className={`px-3 py-2 transition-colors ${view === v ? "bg-slate-900 text-white" : "bg-white text-slate-600"}`}>
               {v === "month" ? "월" : v === "week" ? "주" : "일"}
             </button>
           ))}
         </div>
-      </div>
+      </header>
 
       <div className="flex items-center justify-between">
-        <button onClick={() => shift(-1)} className="px-3 py-2 text-slate-500">◀</button>
-        <span className="font-medium">{title}</span>
-        <button onClick={() => shift(1)} className="px-3 py-2 text-slate-500">▶</button>
+        <button onClick={() => shift(-1)} className="px-3 py-2 text-slate-400">◀</button>
+        <span className="font-display text-base font-bold text-slate-800">{title}</span>
+        <button onClick={() => shift(1)} className="px-3 py-2 text-slate-400">▶</button>
       </div>
 
       {view === "month" && (
-        <div className="bg-white rounded-xl shadow-sm p-2">
-          <div className="grid grid-cols-7 text-center text-xs text-slate-400 pb-1">
+        <div className="rounded-2xl border border-stone-200/80 bg-white p-2 shadow-sm shadow-slate-200/50">
+          <div className="grid grid-cols-7 pb-1 text-center text-xs text-slate-400">
             {DAY_NAMES.map((d) => <span key={d}>{d}</span>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
@@ -211,12 +220,12 @@ export default function CalendarPage() {
               return (
                 <button key={d}
                         onClick={() => { setAnchor(new Date(d)); setView("day"); }}
-                        className="aspect-square rounded-lg text-sm flex flex-col items-center justify-center hover:bg-sky-50">
+                        className="flex aspect-square flex-col items-center justify-center rounded-lg text-sm text-slate-700 transition-colors hover:bg-teal-50">
                   {i + 1}
-                  <span className="flex gap-0.5 h-1.5">
-                    {hasMeal && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                  <span className="flex h-1.5 gap-0.5">
+                    {hasMeal && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
                     {daySlots.length > 0 && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${allTaken ? "bg-sky-600" : "bg-slate-300"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${allTaken ? "bg-teal-600" : "bg-slate-300"}`} />
                     )}
                   </span>
                 </button>
@@ -234,9 +243,9 @@ export default function CalendarPage() {
             const daySlots = byDate(slots, "date", d) as Slot[];
             return (
               <button key={d} onClick={() => { setAnchor(new Date(d)); setView("day"); }}
-                      className="w-full bg-white rounded-xl shadow-sm p-3 text-left">
-                <span className="text-sm font-medium">{d.slice(5)} ({DAY_NAMES[i]})</span>
-                <p className="text-xs text-slate-500 mt-1">
+                      className="w-full rounded-2xl border border-stone-200/80 bg-white p-3.5 text-left shadow-sm shadow-slate-200/50 transition-colors hover:bg-stone-50">
+                <span className="text-sm font-medium text-slate-800">{d.slice(5)} ({DAY_NAMES[i]})</span>
+                <p className="mt-1 text-xs text-slate-500">
                   식사 {dayMeals.length}회 · 영양제 {daySlots.filter((s) => s.status === "taken").length}/{daySlots.length}
                 </p>
               </button>

@@ -64,7 +64,8 @@ def _mfds_lookup(name: str, grams: float) -> dict | None:
 
 def _ai_estimate(name: str, amount: str) -> dict | None:
     try:
-        client = OpenAI(api_key=settings.openai_api_key)
+        client = OpenAI(api_key=settings.openai_api_key,
+                        base_url=settings.openai_base_url or None)
         prompt = (
             "다음 음식의 영양성분을 추정해 JSON으로만 답하세요. "
             f"음식: {name}, 양: {amount or '보통 1인분'}. "
