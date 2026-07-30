@@ -1,9 +1,23 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 
 from .config import settings
 from .db import init_db
+
+scheduler = BackgroundScheduler()
+
+
+def _reminder_tick() -> None:
+    from .db import SessionLocal
+    from .reminders import check_and_send_reminders
+    db = SessionLocal()
+    try:
+        check_and_send_reminders(db, datetime.now())
+    finally:
+        db.close()
 
 
 @asynccontextmanager
@@ -19,7 +33,11 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
+    scheduler.add_job(_reminder_tick, "interval", minutes=1, id="reminder_tick",
+                      replace_existing=True)
+    scheduler.start()
     yield
+    scheduler.shutdown(wait=False)
 
 
 def create_app() -> FastAPI:
