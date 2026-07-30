@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(auth.profile_router)
 
-    from .routers import analysis, calendar, chat, meals, metrics, photos, safety, supplements
+    from .routers import analysis, calendar, chat, meals, metrics, photos, push, safety, supplements
     app.include_router(meals.router)
     app.include_router(metrics.router)
     app.include_router(supplements.router)
@@ -50,6 +50,7 @@ def create_app() -> FastAPI:
     app.include_router(analysis.router)
     app.include_router(photos.router)
     app.include_router(chat.router)
+    app.include_router(push.router)
 
     @app.get("/api/health")
     def health():

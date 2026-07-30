@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     openai_timeout: float = 60.0
     openai_model_mini: str = "gpt-5-mini"
     openai_model_strong: str = "gpt-5"
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:admin@example.com"
 
     @property
     def db_path(self) -> Path:

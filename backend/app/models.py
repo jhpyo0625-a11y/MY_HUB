@@ -146,3 +146,12 @@ class ChatMessage(Base):
     content: Mapped[str] = mapped_column(Text)
     proposed_entries: Mapped[str | None] = mapped_column(Text)  # JSON list, assistant only
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class ReminderLog(Base):
+    __tablename__ = "reminder_logs"
+    __table_args__ = (UniqueConstraint("schedule_id", "date"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    schedule_id: Mapped[int] = mapped_column(ForeignKey("supplement_schedules.id"))
+    date: Mapped[date] = mapped_column(Date)
+    sent_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
