@@ -181,7 +181,9 @@ def _call_llm(input_data: dict, evidence: list[dict], limits: list[dict],
     prompt = (
         "당신은 건강 데이터 분석 도우미입니다. 아래 데이터를 바탕으로 지정된 "
         "스키마의 JSON으로만 답하세요. evidence_ids는 반드시 아래 '참고 근거' "
-        "목록에 있는 id만 사용하세요.\n"
+        "목록에 있는 id만 사용하세요. 모든 텍스트 값(summary, why, text 등)은 "
+        "반드시 자연스러운 한국어로만 작성하고 영어·중국어·일본어 등 다른 언어를 "
+        "절대 섞지 마세요.\n"
         f"데이터: {json.dumps(input_data, ensure_ascii=False)}\n"
         f"참고 근거: {json.dumps(evidence, ensure_ascii=False)}\n"
         f"영양소 권장섭취량 참고: {json.dumps(limits, ensure_ascii=False)}\n"
