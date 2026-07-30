@@ -1,10 +1,13 @@
 import json
+import logging
 import re
 
 import httpx
 from openai import OpenAI
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
 
 NUTRIENT_KEYS = [
     "kcal", "carb_g", "protein_g", "fat_g", "fiber_g", "sugar_g",
@@ -55,12 +58,14 @@ def _mfds_lookup(name: str, grams: float) -> dict | None:
                 out[key] = round(float(raw) * factor, 2)
         return out if out["kcal"] is not None else None
     except Exception:
+        logger.warning("MFDS lookup failed for %r", name, exc_info=True)
         return None  # any failure → fall through to next source
 
 
 def _ai_estimate(name: str, amount: str) -> dict | None:
     try:
-        client = OpenAI(api_key=settings.openai_api_key)
+        client = OpenAI(api_key=settings.openai_api_key,
+                        base_url=settings.openai_base_url or None)
         prompt = (
             "다음 음식의 영양성분을 추정해 JSON으로만 답하세요. "
             f"음식: {name}, 양: {amount or '보통 1인분'}. "
@@ -77,6 +82,7 @@ def _ai_estimate(name: str, amount: str) -> dict | None:
                     else None)
                 for k in NUTRIENT_KEYS}
     except Exception:
+        logger.warning("AI nutrient estimate failed for %r", name, exc_info=True)
         return None
 
 

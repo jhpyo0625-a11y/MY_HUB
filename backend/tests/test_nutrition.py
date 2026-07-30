@@ -72,6 +72,54 @@ def test_ai_fallback(monkeypatch):
     assert values["kcal"] == 1.0
 
 
+def test_ai_estimate_empty_base_url_becomes_none(monkeypatch):
+    from app import nutrition
+    from app.config import settings
+    monkeypatch.setattr(settings, "mfds_api_key", "")
+    monkeypatch.setattr(settings, "openai_api_key", "k")
+    monkeypatch.setattr(settings, "openai_base_url", "")  # empty -> None (real OpenAI)
+
+    captured = {}
+    ai_json = {k: 1.0 for k in nutrition.NUTRIENT_KEYS}
+
+    class FakeMsg:
+        content = json.dumps(ai_json)
+    class FakeChoice:
+        message = FakeMsg()
+    class FakeCompletion:
+        choices = [FakeChoice()]
+    class FakeCompletions:
+        def create(self, **kw):
+            return FakeCompletion()
+    class FakeChat:
+        completions = FakeCompletions()
+    class FakeClient:
+        def __init__(self, **kw):
+            captured.update(kw)
+            self.chat = FakeChat()
+
+    monkeypatch.setattr(nutrition, "OpenAI", FakeClient)
+    nutrition.resolve_nutrients("비빔밥", "1그릇")
+    assert captured["base_url"] is None
+    assert captured["api_key"] == "k"
+
+
+def test_mfds_lookup_failure_is_logged(monkeypatch, caplog):
+    from app import nutrition
+    from app.config import settings
+    monkeypatch.setattr(settings, "mfds_api_key", "test-key")
+    monkeypatch.setattr(settings, "openai_api_key", "")
+
+    def boom(*a, **kw):
+        raise RuntimeError("network down")
+    monkeypatch.setattr(nutrition.httpx, "get", boom)
+
+    with caplog.at_level("WARNING"):
+        values, source = nutrition.resolve_nutrients("김치찌개", "200g")
+    assert (values, source) == (None, "none")
+    assert "MFDS lookup failed" in caplog.text
+
+
 def test_no_sources_configured(monkeypatch):
     from app import nutrition
     from app.config import settings

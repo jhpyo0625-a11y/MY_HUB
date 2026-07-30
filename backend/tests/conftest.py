@@ -17,7 +17,8 @@ def db_session_factory():
     )
     import app.models  # noqa: F401 — register tables (module exists from Task 2 on)
     Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine, autoflush=False)
+    yield sessionmaker(bind=engine, autoflush=False)
+    engine.dispose()
 
 
 @pytest.fixture()

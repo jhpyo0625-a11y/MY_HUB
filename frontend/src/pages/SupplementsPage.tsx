@@ -60,17 +60,17 @@ function SuppForm({ initial, onSaved, onCancel }: {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+    <div className="space-y-3 rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm shadow-slate-200/50">
       <div className="flex gap-2">
         <input value={form.brand} placeholder="브랜드"
                onChange={(e) => setForm({ ...form, brand: e.target.value })}
-               className="w-28 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+               className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
         <input value={form.product_name} placeholder="제품명 *"
                onChange={(e) => setForm({ ...form, product_name: e.target.value })}
-               className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+               className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
         <input value={form.serving_size} placeholder="1회 분량"
                onChange={(e) => setForm({ ...form, serving_size: e.target.value })}
-               className="w-20 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+               className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
       </div>
 
       <p className="text-xs font-semibold text-slate-500">성분 (1회 분량 기준)</p>
@@ -81,13 +81,13 @@ function SuppForm({ initial, onSaved, onCancel }: {
         <div key={idx} className="flex gap-2">
           <input list="ingredients" value={ing.ingredient_code} placeholder="성분 (예: vitamin_d)"
                  onChange={(e) => setForm({ ...form, ingredients: form.ingredients.map((x, i) => i === idx ? { ...x, ingredient_code: e.target.value } : x) })}
-                 className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                 className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
           <input type="number" value={ing.amount || ""} placeholder="양"
                  onChange={(e) => setForm({ ...form, ingredients: form.ingredients.map((x, i) => i === idx ? { ...x, amount: Number(e.target.value) } : x) })}
-                 className="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                 className="w-20 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-900 focus:outline-none" />
           <select value={ing.unit}
                   onChange={(e) => setForm({ ...form, ingredients: form.ingredients.map((x, i) => i === idx ? { ...x, unit: e.target.value } : x) })}
-                  className="border border-slate-200 rounded-lg px-2 text-sm">
+                  className="rounded-lg border border-slate-200 px-2 text-sm">
             {UNITS.map((u) => <option key={u}>{u}</option>)}
           </select>
           <button onClick={() => setForm({ ...form, ingredients: form.ingredients.filter((_, i) => i !== idx) })}
@@ -95,7 +95,7 @@ function SuppForm({ initial, onSaved, onCancel }: {
         </div>
       ))}
       <button onClick={() => setForm({ ...form, ingredients: [...form.ingredients, { ingredient_code: "", amount: 0, unit: "mg" }] })}
-              className="text-sm text-sky-600 py-1">+ 성분 추가</button>
+              className="py-1 text-sm font-medium text-teal-700">+ 성분 추가</button>
 
       <p className="text-xs font-semibold text-slate-500">복용 스케줄</p>
       {form.schedules.map((s, si) => (
@@ -103,18 +103,18 @@ function SuppForm({ initial, onSaved, onCancel }: {
           <div className="flex gap-1">
             {DAY_NAMES.map((d, day) => (
               <button key={d} onClick={() => toggleDay(si, day)}
-                      className={`w-9 h-9 rounded-full text-sm ${s.days_of_week.includes(String(day)) ? "bg-sky-600 text-white" : "border border-slate-300"}`}>
+                      className={`h-9 w-9 rounded-full text-sm transition-colors ${s.days_of_week.includes(String(day)) ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-600"}`}>
                 {d}
               </button>
             ))}
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <input type="time" value={s.time_of_day}
                    onChange={(e) => setForm({ ...form, schedules: form.schedules.map((x, i) => i === si ? { ...x, time_of_day: e.target.value } : x) })}
-                   className="border border-slate-200 rounded-lg px-2 py-1 text-sm" />
+                   className="rounded-lg border border-slate-200 px-2 py-1 text-sm" />
             <input type="number" min={1} value={s.servings}
                    onChange={(e) => setForm({ ...form, schedules: form.schedules.map((x, i) => i === si ? { ...x, servings: Number(e.target.value) } : x) })}
-                   className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm" />
+                   className="w-16 rounded-lg border border-slate-200 px-2 py-1 text-sm" />
             <span className="text-xs text-slate-500">회분</span>
             <button onClick={() => setForm({ ...form, schedules: form.schedules.filter((_, i) => i !== si) })}
                     className="text-xs text-slate-400">✕</button>
@@ -122,12 +122,12 @@ function SuppForm({ initial, onSaved, onCancel }: {
         </div>
       ))}
       <button onClick={() => setForm({ ...form, schedules: [...form.schedules, { days_of_week: "0123456", time_of_day: "09:00", servings: 1 }] })}
-              className="text-sm text-sky-600 py-1">+ 스케줄 추가</button>
+              className="py-1 text-sm font-medium text-teal-700">+ 스케줄 추가</button>
 
       <div className="flex gap-2 pt-2">
-        <button onClick={onCancel} className="flex-1 border border-slate-300 rounded-lg py-2 text-sm">취소</button>
+        <button onClick={onCancel} className="flex-1 rounded-full border border-slate-300 py-2 text-sm text-slate-600">취소</button>
         <button onClick={save} disabled={saving || !form.product_name.trim()}
-                className="flex-1 bg-sky-600 text-white rounded-lg py-2 text-sm disabled:opacity-40">
+                className="flex-1 rounded-full bg-slate-900 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-40">
           저장
         </button>
       </div>
@@ -149,14 +149,17 @@ export default function SupplementsPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 space-y-4">
-      <div className="flex items-center">
-        <h1 className="text-xl font-bold">영양제 관리</h1>
+    <div className="mx-auto max-w-lg space-y-4 px-4 pb-4 pt-6">
+      <header className="flex items-end justify-between">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-teal-700/60">Supplements</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold leading-none text-slate-900">영양제</h1>
+        </div>
         <button onClick={() => setEditing(emptyForm())}
-                className="ml-auto bg-sky-600 text-white rounded-lg px-4 py-2 text-sm">
+                className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800">
           + 추가
         </button>
-      </div>
+      </header>
 
       {editing && (
         <SuppForm initial={editing}
@@ -165,30 +168,30 @@ export default function SupplementsPage() {
       )}
 
       {supps.map((s) => (
-        <div key={s.id} className="bg-white rounded-xl shadow-sm p-4">
+        <div key={s.id} className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm shadow-slate-200/50">
           <div className="flex items-start">
             <div>
-              <p className="font-medium">{s.product_name}</p>
+              <p className="font-display text-lg font-bold text-slate-900">{s.product_name}</p>
               <p className="text-xs text-slate-500">{s.brand} · {s.serving_size}</p>
             </div>
             <div className="ml-auto flex gap-3 text-sm">
-              <button onClick={() => setEditing({ ...s })} className="text-sky-600 py-2">수정</button>
-              <button onClick={() => remove(s.id)} className="text-slate-400 py-2">제거</button>
+              <button onClick={() => setEditing({ ...s })} className="py-2 font-medium text-teal-700">수정</button>
+              <button onClick={() => remove(s.id)} className="py-2 text-slate-400">제거</button>
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
+          <p className="mt-2 text-xs text-slate-500">
             {s.ingredients.map((i) => `${i.ingredient_code} ${i.amount}${i.unit}`).join(" · ")}
           </p>
           {s.schedules.map((sc, i) => (
-            <p key={i} className="text-xs text-slate-400 mt-1">
-              {[...sc.days_of_week].map((d) => DAY_NAMES[Number(d)]).join(",")} {sc.time_of_day}
+            <p key={i} className="mt-1 text-xs text-slate-400">
+              <span className="font-mono">{[...sc.days_of_week].map((d) => DAY_NAMES[Number(d)]).join(",")} {sc.time_of_day}</span>
               {sc.servings > 1 ? ` ×${sc.servings}` : ""}
             </p>
           ))}
         </div>
       ))}
       {supps.length === 0 && !editing && (
-        <p className="text-sm text-slate-400 text-center pt-8">
+        <p className="pt-8 text-center text-sm text-slate-400">
           영양제를 추가하면 캘린더와 복용 알림에 반영됩니다
         </p>
       )}
