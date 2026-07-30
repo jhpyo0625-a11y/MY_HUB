@@ -137,3 +137,12 @@ class Analysis(Base):
     run_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     trigger: Mapped[str] = mapped_column(String)  # manual | weekly
     result: Mapped[str] = mapped_column(Text)     # JSON — see analysis.AnalysisResult
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    role: Mapped[str] = mapped_column(String)  # user | assistant
+    content: Mapped[str] = mapped_column(Text)
+    proposed_entries: Mapped[str | None] = mapped_column(Text)  # JSON list, assistant only
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
