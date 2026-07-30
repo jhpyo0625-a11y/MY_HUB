@@ -5,12 +5,14 @@ import CalendarPage from "./pages/CalendarPage";
 import SupplementsPage from "./pages/SupplementsPage";
 import ReportPage from "./pages/ReportPage";
 import DashboardPage from "./pages/DashboardPage";
+import ChatPage from "./pages/ChatPage";
 
 const TABS = [
   { to: "/dashboard", label: "대시보드", icon: "🏠" },
   { to: "/data", label: "내 데이터", icon: "📊" },
   { to: "/calendar", label: "캘린더", icon: "📅" },
   { to: "/supplements", label: "영양제", icon: "💊" },
+  { to: "/chat", label: "채팅", icon: "💬" },
   { to: "/report", label: "리포트", icon: "📄" },
 ];
 
@@ -47,6 +49,7 @@ export default function App() {
           <Route path="/data" element={<MyDataPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/supplements" element={<SupplementsPage />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
