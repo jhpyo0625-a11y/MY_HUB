@@ -1,3 +1,4 @@
+import logging
 import uuid
 from pathlib import Path
 
@@ -7,6 +8,8 @@ from fastapi.responses import FileResponse
 from ..auth import require_auth
 from ..config import settings
 from ..photo_extraction import PHOTO_KINDS, extract_from_photo
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/photos", tags=["photos"],
                    dependencies=[Depends(require_auth)])
@@ -44,6 +47,7 @@ async def extract(kind: str = Form(...), file: UploadFile = File(...)):
     try:
         extracted = extract_from_photo(kind, image_bytes, file.content_type)
     except Exception as exc:  # bad JSON, network error, model refusal
+        logger.warning("photo extraction failed for kind=%s", kind, exc_info=True)
         error = str(exc)
 
     return {"photo_path": photo_path, "extracted": extracted, "error": error}

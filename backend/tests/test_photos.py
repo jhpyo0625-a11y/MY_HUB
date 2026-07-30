@@ -56,7 +56,7 @@ def test_extract_unsupported_mime_rejected(auth_client):
     assert res.status_code == 422
 
 
-def test_extract_llm_failure_still_saves_photo(auth_client, monkeypatch, tmp_path):
+def test_extract_llm_failure_still_saves_photo(auth_client, monkeypatch, tmp_path, caplog):
     from app import photo_extraction
     from app.config import settings
     monkeypatch.setattr(settings, "myhub_data_dir", tmp_path)
@@ -71,14 +71,16 @@ def test_extract_llm_failure_still_saves_photo(auth_client, monkeypatch, tmp_pat
             self.chat = Ch()
     monkeypatch.setattr(photo_extraction, "OpenAI", BoomClient)
 
-    res = auth_client.post("/api/photos/extract",
-                           data={"kind": "meal"},
-                           files={"file": ("m.jpg", io.BytesIO(b"data"), "image/jpeg")})
+    with caplog.at_level("WARNING"):
+        res = auth_client.post("/api/photos/extract",
+                               data={"kind": "meal"},
+                               files={"file": ("m.jpg", io.BytesIO(b"data"), "image/jpeg")})
     assert res.status_code == 200
     body = res.json()
     assert body["extracted"] is None
     assert "vision API down" in body["error"]
     assert body["photo_path"]
+    assert "photo extraction failed" in caplog.text
 
 
 def test_photo_not_found(auth_client):
