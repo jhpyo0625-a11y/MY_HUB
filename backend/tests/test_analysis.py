@@ -184,5 +184,19 @@ def test_call_llm_uses_configured_base_url(db_session_factory, monkeypatch):
     assert captured["api_key"] == "nvapi-key"
 
 
+def test_run_endpoint_resolves_evidence(auth_client, db_session_factory, monkeypatch):
+    from app import analysis
+    _seed_evidence(db_session_factory)  # EvidenceRef id=1, grade A, mohw url
+    monkeypatch.setattr(analysis, "OpenAI", _fake_client([GOOD_RESULT]))
+    monkeypatch.setattr(analysis.settings, "openai_api_key", "k")
+
+    res = auth_client.post("/api/analysis/run").json()
+    assert "evidence" in res
+    ev = res["evidence"]["1"]  # GOOD_RESULT cites evidence_ids [1]
+    assert ev["reliability_grade"] == "A"
+    assert ev["source_url"].startswith("http")
+    assert ev["type"] == "KDRI"
+
+
 def test_analysis_requires_auth(client):
     assert client.get("/api/analysis").status_code == 401
