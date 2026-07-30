@@ -41,13 +41,14 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(auth.profile_router)
 
-    from .routers import analysis, calendar, meals, metrics, safety, supplements
+    from .routers import analysis, calendar, meals, metrics, photos, safety, supplements
     app.include_router(meals.router)
     app.include_router(metrics.router)
     app.include_router(supplements.router)
     app.include_router(calendar.router)
     app.include_router(safety.router)
     app.include_router(analysis.router)
+    app.include_router(photos.router)
 
     @app.get("/api/health")
     def health():
