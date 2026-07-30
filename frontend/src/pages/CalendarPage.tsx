@@ -56,9 +56,10 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
     extracted: LabelExtract | null; error: string | null;
   }) {
     if (result.extracted) {
-      setItems([...items.filter((i) => i.name.trim()), {
-        name: result.extracted.name || "", amount: result.extracted.amount || "",
-        nutrients: result.extracted.nutrients,
+      const extracted = result.extracted;
+      setItems((prev) => [...prev.filter((i) => i.name.trim()), {
+        name: extracted.name || "", amount: extracted.amount || "",
+        nutrients: extracted.nutrients,
       }]);
     }
     setNotice(result.error ? `영양정보표 인식 실패: ${result.error}` : null);

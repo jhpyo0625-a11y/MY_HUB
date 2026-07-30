@@ -11,20 +11,29 @@ function ProposedEntryCard({ entry, onConfirmed }: {
   entry: ProposedEntry; onConfirmed: () => void;
 }) {
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   async function confirm() {
-    await api("/api/metrics/entries", { method: "POST", body: JSON.stringify(entry) });
-    setSaved(true);
-    onConfirmed();
+    setError(null);
+    try {
+      await api("/api/metrics/entries", { method: "POST", body: JSON.stringify(entry) });
+      setSaved(true);
+      onConfirmed();
+    } catch {
+      setError("저장에 실패했어요. 값을 확인해주세요.");
+    }
   }
   return (
-    <div className="mt-2 flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm">
-      <span className="text-teal-800">
-        {entry.metric_code} = {entry.value_num ?? entry.value_text}
-      </span>
-      <button onClick={confirm} disabled={saved}
-              className="ml-auto rounded-full bg-teal-700 px-3 py-1 text-xs font-medium text-white disabled:opacity-40">
-        {saved ? "저장됨 ✓" : "저장"}
-      </button>
+    <div className="mt-2 flex flex-col gap-1">
+      <div className="flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm">
+        <span className="text-teal-800">
+          {entry.metric_code} = {entry.value_num ?? entry.value_text}
+        </span>
+        <button onClick={confirm} disabled={saved}
+                className="ml-auto rounded-full bg-teal-700 px-3 py-1 text-xs font-medium text-white disabled:opacity-40">
+          {saved ? "저장됨 ✓" : "저장"}
+        </button>
+      </div>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   );
 }
