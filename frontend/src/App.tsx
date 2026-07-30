@@ -16,15 +16,15 @@ const TABS = [
 
 function TabBar() {
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200">
+    <nav className="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur border-t border-stone-200">
       <div className="max-w-lg mx-auto flex">
         {TABS.map((t) => (
           <NavLink
             key={t.to}
             to={t.to}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-2 text-xs min-h-11 ${
-                isActive ? "text-sky-600 font-semibold" : "text-slate-500"
+              `flex-1 flex flex-col items-center py-2 text-xs min-h-11 transition-colors ${
+                isActive ? "text-teal-700 font-semibold" : "text-slate-400"
               }`
             }
           >
@@ -40,7 +40,7 @@ function TabBar() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 pb-20 text-slate-800">
+      <div className="min-h-screen bg-stone-50 pb-20 text-slate-800">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
