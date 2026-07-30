@@ -182,6 +182,7 @@ def test_call_llm_uses_configured_base_url(db_session_factory, monkeypatch):
     analysis.run_analysis(db, trigger="manual")
     assert captured["base_url"] == "https://integrate.api.nvidia.com/v1"
     assert captured["api_key"] == "nvapi-key"
+    assert captured["timeout"] == analysis.settings.openai_timeout
 
 
 def test_run_endpoint_resolves_evidence(auth_client, db_session_factory, monkeypatch):

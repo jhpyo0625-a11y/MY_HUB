@@ -102,6 +102,7 @@ def test_ai_estimate_empty_base_url_becomes_none(monkeypatch):
     nutrition.resolve_nutrients("비빔밥", "1그릇")
     assert captured["base_url"] is None
     assert captured["api_key"] == "k"
+    assert captured["timeout"] == settings.openai_timeout
 
 
 def test_mfds_lookup_failure_is_logged(monkeypatch, caplog):
