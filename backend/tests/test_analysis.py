@@ -163,5 +163,26 @@ def test_analysis_latest_is_null_when_none_exist(auth_client):
     assert auth_client.get("/api/analysis/latest").json() is None
 
 
+def test_call_llm_uses_configured_base_url(db_session_factory, monkeypatch):
+    from app import analysis
+    db = _seed_evidence(db_session_factory)
+    captured = {}
+    Base = _fake_client([GOOD_RESULT])
+
+    class Rec(Base):
+        def __init__(self, **kw):
+            captured.update(kw)
+            super().__init__(**kw)
+
+    monkeypatch.setattr(analysis, "OpenAI", Rec)
+    monkeypatch.setattr(analysis.settings, "openai_api_key", "nvapi-key")
+    monkeypatch.setattr(analysis.settings, "openai_base_url",
+                        "https://integrate.api.nvidia.com/v1")
+
+    analysis.run_analysis(db, trigger="manual")
+    assert captured["base_url"] == "https://integrate.api.nvidia.com/v1"
+    assert captured["api_key"] == "nvapi-key"
+
+
 def test_analysis_requires_auth(client):
     assert client.get("/api/analysis").status_code == 401

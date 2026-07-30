@@ -175,7 +175,8 @@ _SCHEMA_HINT = (
 
 def _call_llm(input_data: dict, evidence: list[dict], limits: list[dict],
              retry_hint: str | None) -> dict:
-    client = OpenAI(api_key=settings.openai_api_key)
+    client = OpenAI(api_key=settings.openai_api_key,
+                    base_url=settings.openai_base_url or None)
     prompt = (
         "당신은 건강 데이터 분석 도우미입니다. 아래 데이터를 바탕으로 지정된 "
         "스키마의 JSON으로만 답하세요. evidence_ids는 반드시 아래 '참고 근거' "
