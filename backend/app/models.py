@@ -54,7 +54,7 @@ class MealItem(Base):
     name: Mapped[str] = mapped_column(String)
     amount: Mapped[str] = mapped_column(String, default="")  # free text: "100g", "1공기"
     nutrients: Mapped[str | None] = mapped_column(Text)      # JSON {kcal, protein_g, ...}
-    nutrient_source: Mapped[str] = mapped_column(String, default="none")  # mfds_db | ai_estimate | none
+    nutrient_source: Mapped[str] = mapped_column(String, default="none")  # mfds_db | ai_estimate | photo | none
     meal: Mapped["Meal"] = relationship(back_populates="items")
 
 

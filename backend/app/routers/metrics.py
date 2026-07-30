@@ -70,3 +70,25 @@ def create_entry(body: EntryIn, db: Session = Depends(get_db)):
     db.add(e)
     db.commit()
     return {"id": e.id}
+
+
+class BulkEntryIn(BaseModel):
+    entries: list[EntryIn]
+
+
+@router.post("/entries/bulk", status_code=201)
+def create_entries_bulk(body: BulkEntryIn, db: Session = Depends(get_db)):
+    for e in body.entries:
+        if db.get(MetricDefinition, e.metric_code) is None:
+            raise HTTPException(404, f"알 수 없는 항목입니다: {e.metric_code}")
+    created_ids = []
+    for e in body.entries:
+        entry = MetricEntry(metric_code=e.metric_code, value_num=e.value_num,
+                            value_text=e.value_text,
+                            measured_at=e.measured_at or datetime.now(),
+                            source="photo")
+        db.add(entry)
+        db.flush()
+        created_ids.append(entry.id)
+    db.commit()
+    return {"created": created_ids}

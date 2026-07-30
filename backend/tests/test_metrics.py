@@ -67,3 +67,23 @@ def test_entry_validation(seeded_client):
     # text metric without value_text
     assert seeded_client.post("/api/metrics/entries", json={
         "metric_code": "conditions"}).status_code == 422
+
+
+def test_bulk_entries(seeded_client):
+    res = seeded_client.post("/api/metrics/entries/bulk", json={"entries": [
+        {"metric_code": "ldl", "value_num": 110, "measured_at": "2026-07-01T00:00:00"},
+        {"metric_code": "hdl", "value_num": 55, "measured_at": "2026-07-01T00:00:00"},
+    ]})
+    assert res.status_code == 201
+    assert len(res.json()["created"]) == 2
+    latest = seeded_client.get("/api/metrics/latest").json()
+    assert latest["ldl"]["value_num"] == 110
+
+
+def test_bulk_entries_unknown_code_rejects_all(seeded_client):
+    res = seeded_client.post("/api/metrics/entries/bulk", json={"entries": [
+        {"metric_code": "ldl", "value_num": 110},
+        {"metric_code": "nope", "value_num": 1},
+    ]})
+    assert res.status_code == 404
+    assert seeded_client.get("/api/metrics/entries", params={"code": "ldl"}).json() == []

@@ -27,3 +27,17 @@ def test_meal_crud(auth_client):
 def test_meals_require_auth(client):
     assert client.get("/api/meals",
                       params={"start": "2026-07-29", "end": "2026-07-29"}).status_code == 401
+
+
+def test_meal_with_photo_and_prefilled_nutrients(auth_client):
+    res = auth_client.post("/api/meals", json={
+        "eaten_at": "2026-07-29T12:00:00", "dish_name": "컵라면",
+        "photo_path": "abc123.jpg",
+        "items": [{"name": "컵라면", "amount": "1개",
+                   "nutrients": {"kcal": 500, "sodium_mg": 1200}}]})
+    assert res.status_code == 201
+    meal = auth_client.get("/api/meals",
+                           params={"start": "2026-07-29", "end": "2026-07-29"}).json()[0]
+    assert meal["photo_path"] == "abc123.jpg"
+    assert meal["items"][0]["nutrient_source"] == "photo"
+    assert meal["items"][0]["nutrients"]["kcal"] == 500
