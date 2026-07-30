@@ -182,6 +182,7 @@ def test_call_llm_uses_configured_base_url(db_session_factory, monkeypatch):
     analysis.run_analysis(db, trigger="manual")
     assert captured["base_url"] == "https://integrate.api.nvidia.com/v1"
     assert captured["api_key"] == "nvapi-key"
+    assert captured["timeout"] == analysis.settings.openai_timeout
 
 
 def test_run_endpoint_resolves_evidence(auth_client, db_session_factory, monkeypatch):
@@ -196,6 +197,17 @@ def test_run_endpoint_resolves_evidence(auth_client, db_session_factory, monkeyp
     assert ev["reliability_grade"] == "A"
     assert ev["source_url"].startswith("http")
     assert ev["type"] == "KDRI"
+
+
+def test_top3_allows_one_action_rejects_zero():
+    import pytest
+    from app.analysis import Top3Entry
+    # 1 action is accepted (relaxed from 3 for free-tier reliability)
+    Top3Entry(nutrient="비타민D", why="부족",
+              actions=[{"type": "food", "text": "연어"}], evidence_ids=[1])
+    # 0 actions still rejected
+    with pytest.raises(Exception):
+        Top3Entry(nutrient="비타민D", why="부족", actions=[], evidence_ids=[1])
 
 
 def test_analysis_requires_auth(client):
