@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { PhotoUploadButton, photoUrl } from "../PhotoUpload";
 
 interface Ingredient { ingredient_code: string; amount: number; unit: string; }
 interface Schedule { id?: number; days_of_week: string; time_of_day: string; servings: number; }
 interface Supp {
   id: number; brand: string; product_name: string; serving_size: string;
+  photo_path: string | null;
   ingredients: Ingredient[]; schedules: Schedule[];
+}
+interface LabelExtract {
+  brand?: string; product_name?: string; serving_size?: string;
+  ingredients?: Ingredient[];
 }
 
 const DAY_NAMES = ["월", "화", "수", "목", "금", "토", "일"];
@@ -19,6 +25,7 @@ const UNITS = ["mg", "ug", "IU", "g", "억CFU"];
 
 const emptyForm = () => ({
   brand: "", product_name: "", serving_size: "1정",
+  photo_path: null as string | null,
   ingredients: [{ ingredient_code: "", amount: 0, unit: "mg" }] as Ingredient[],
   schedules: [{ days_of_week: "0123456", time_of_day: "09:00", servings: 1 }] as Schedule[],
 });
@@ -29,6 +36,21 @@ function SuppForm({ initial, onSaved, onCancel }: {
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+
+  function applyExtract(result: {
+    photo_path: string; extracted: LabelExtract | null; error: string | null;
+  }) {
+    setForm((f) => ({
+      ...f,
+      photo_path: result.photo_path,
+      brand: result.extracted?.brand ?? f.brand,
+      product_name: result.extracted?.product_name ?? f.product_name,
+      serving_size: result.extracted?.serving_size ?? f.serving_size,
+      ingredients: result.extracted?.ingredients?.length
+        ? result.extracted.ingredients
+        : f.ingredients,
+    }));
+  }
 
   function toggleDay(si: number, day: number) {
     const s = form.schedules[si];
@@ -61,6 +83,13 @@ function SuppForm({ initial, onSaved, onCancel }: {
 
   return (
     <div className="space-y-3 rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm shadow-slate-200/50">
+      <div className="flex items-center gap-2">
+        <PhotoUploadButton kind="supplement_label" label="라벨 사진" onExtracted={applyExtract} />
+        {form.photo_path && (
+          <img src={photoUrl(form.photo_path)} className="h-12 w-12 rounded-lg object-cover" />
+        )}
+      </div>
+
       <div className="flex gap-2">
         <input value={form.brand} placeholder="브랜드"
                onChange={(e) => setForm({ ...form, brand: e.target.value })}
@@ -169,7 +198,10 @@ export default function SupplementsPage() {
 
       {supps.map((s) => (
         <div key={s.id} className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm shadow-slate-200/50">
-          <div className="flex items-start">
+          <div className="flex items-start gap-3">
+            {s.photo_path && (
+              <img src={photoUrl(s.photo_path)} className="h-12 w-12 rounded-lg object-cover" />
+            )}
             <div>
               <p className="font-display text-lg font-bold text-slate-900">{s.product_name}</p>
               <p className="text-xs text-slate-500">{s.brand} · {s.serving_size}</p>

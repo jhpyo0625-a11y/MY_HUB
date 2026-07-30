@@ -4,6 +4,7 @@ import {
   Tooltip, XAxis, YAxis,
 } from "recharts";
 import { api } from "../api";
+import { PhotoUploadButton } from "../PhotoUpload";
 
 interface MetricDef {
   code: string; name_ko: string; unit: string; domain: string;
@@ -182,6 +183,65 @@ function ProfileCard() {
   );
 }
 
+interface LabEntry { metric_code: string; value_num: number | null; measured_at: string | null; }
+interface LabExtract { entries?: LabEntry[]; }
+
+function LabResultUpload({ defs, onSaved }: { defs: MetricDef[]; onSaved: () => void }) {
+  const [entries, setEntries] = useState<LabEntry[] | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const defByCode = Object.fromEntries(defs.map((d) => [d.code, d]));
+
+  function applyExtract(result: { extracted: LabExtract | null; error: string | null }) {
+    setEntries((result.extracted?.entries ?? []).filter((e) => defByCode[e.metric_code]));
+    setNotice(result.error ? `인식 실패: ${result.error}` : null);
+  }
+
+  async function save() {
+    if (!entries?.length) return;
+    setSaving(true);
+    try {
+      await api("/api/metrics/entries/bulk", {
+        method: "POST",
+        body: JSON.stringify({ entries }),
+      });
+      setEntries(null);
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="reveal space-y-3 rounded-2xl border border-stone-200/80 bg-white p-5 shadow-sm shadow-slate-200/50">
+      <h2 className="font-display text-base font-bold text-slate-800">건강검진 결과지</h2>
+      <PhotoUploadButton kind="lab_result" label="결과지 사진으로 입력" onExtracted={applyExtract} />
+      {notice && <p className="text-xs text-amber-600">{notice}</p>}
+      {entries && (
+        <div className="space-y-2">
+          {entries.map((e, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <span className="w-28 shrink-0 text-sm text-slate-700">
+                {defByCode[e.metric_code]?.name_ko ?? e.metric_code}
+              </span>
+              <input type="number" value={e.value_num ?? ""}
+                     onChange={(ev) => setEntries(entries.map((x, i) =>
+                       i === idx ? { ...x, value_num: Number(ev.target.value) } : x))}
+                     className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <button onClick={() => setEntries(entries.filter((_, i) => i !== idx))}
+                      className="text-xs text-slate-400">✕</button>
+            </div>
+          ))}
+          <button onClick={save} disabled={saving || entries.length === 0}
+                  className="w-full rounded-full bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-40">
+            {saving ? "저장 중…" : `${entries.length}개 항목 저장`}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function MyDataPage() {
   const [defs, setDefs] = useState<MetricDef[]>([]);
   const [latest, setLatest] = useState<Latest>({});
@@ -204,6 +264,7 @@ export default function MyDataPage() {
         </p>
       </header>
       <ProfileCard />
+      <LabResultUpload defs={defs} onSaved={reload} />
       {DOMAIN_ORDER.map((domain) => (
         <section key={domain}
                  className="rounded-2xl border border-stone-200/80 bg-white px-5 py-3 shadow-sm shadow-slate-200/50">
