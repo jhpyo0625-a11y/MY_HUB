@@ -51,3 +51,16 @@ def test_send_push_gone_clears_subscription(db_session_factory, monkeypatch):
 
     assert push.send_push(db, {"title": "t"}) is False
     assert push.get_subscription(db) is None
+
+
+def test_get_subscription_handles_corrupted_json(db_session_factory, caplog):
+    from app import push
+    from app.models import Profile
+    db = db_session_factory()
+    db.add(Profile(id=1, push_subscription="not-valid-json{{{"))
+    db.commit()
+
+    with caplog.at_level("WARNING"):
+        result = push.get_subscription(db)
+    assert result is None
+    assert "not valid JSON" in caplog.text

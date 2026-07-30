@@ -14,7 +14,11 @@ def get_subscription(db: Session) -> dict | None:
     profile = db.get(Profile, 1)
     if profile is None or not profile.push_subscription:
         return None
-    return json.loads(profile.push_subscription)
+    try:
+        return json.loads(profile.push_subscription)
+    except json.JSONDecodeError:
+        logger.warning("stored push_subscription is not valid JSON", exc_info=True)
+        return None
 
 
 def subscribe(db: Session, subscription: dict) -> None:
