@@ -41,6 +41,18 @@ const EVIDENCE_TYPE_LABEL: Record<string, string> = {
   KDRI: "KDRI", NIH_ODS: "NIH ODS", UL: "UL", interaction_rule: "상호작용",
 };
 
+// Analysis is a slow synchronous LLM call (a strong model + a retry can run
+// several minutes). Stop waiting on the POST after this, then recover: the
+// /run route is a sync FastAPI handler, so it finishes and stores the report
+// even if the connection dropped (or a reverse proxy cut the idle socket),
+// and we poll /latest to pick that stored report up instead of losing it.
+// ponytail: budgets tuned for a slow free-tier model; the real speed lever is
+// OPENAI_MODEL_STRONG, not these numbers. Stop trusting the POST early (proxies
+// commonly cut idle sockets at ~60-90s) and poll /latest for a while after.
+const POST_TIMEOUT_MS = 90000;
+const POLL_BUDGET_MS = 300000;
+const POLL_INTERVAL_MS = 3000;
+
 const fmtDate = (iso: string) => iso.slice(0, 16).replace("T", " ");
 
 function SectionTitle({ children }: { children: ReactNode }) {
@@ -167,6 +179,7 @@ export default function ReportPage() {
   const [detail, setDetail] = useState<AnalysisDetail | null>(null);
   const [history, setHistory] = useState<AnalysisListItem[]>([]);
   const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
 
   function loadLatest() {
@@ -177,16 +190,57 @@ export default function ReportPage() {
   }
   useEffect(() => { loadLatest(); loadHistory(); }, []);
 
+  // After the POST connection is lost, keep checking /latest until a report
+  // newer than the one we started with appears (the run finishes server-side).
+  async function pollForNewReport(beforeId: number | null, deadline: number) {
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      try {
+        const latest = await api<AnalysisDetail | null>("/api/analysis/latest");
+        if (latest && latest.id !== beforeId) return latest;
+      } catch { /* transient — keep polling */ }
+    }
+    return null;
+  }
+
   async function runAnalysis() {
     setRunning(true);
     setError("");
+    setElapsed(0);
+    const startedAt = Date.now();
+    const beforeId = detail?.id ?? null;
+    const tick = setInterval(
+      () => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    const controller = new AbortController();
+    const cap = setTimeout(() => controller.abort(), POST_TIMEOUT_MS);
     try {
-      const result = await api<AnalysisDetail>("/api/analysis/run", { method: "POST" });
-      setDetail(result);
-      loadHistory();
-    } catch {
+      const res = await fetch("/api/analysis/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+      if (res.status === 401) { location.href = "/login"; return; }
+      if (res.ok) {
+        setDetail(await res.json());
+        loadHistory();
+        return;
+      }
+      // Server answered with a real failure (e.g. 502 AnalysisError) — don't poll.
       setError("분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch {
+      // Connection aborted/dropped before a response — the run keeps going
+      // server-side, so recover the stored result via polling.
+      const found = await pollForNewReport(beforeId, Date.now() + POLL_BUDGET_MS);
+      if (found) {
+        setDetail(found);
+        loadHistory();
+      } else {
+        setError("분석이 예상보다 오래 걸리고 있어요. 잠시 후 리포트를 새로고침해 확인해주세요.");
+      }
     } finally {
+      clearTimeout(cap);
+      clearInterval(tick);
       setRunning(false);
     }
   }
@@ -204,7 +258,7 @@ export default function ReportPage() {
         </div>
         <button onClick={runAnalysis} disabled={running}
                 className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800 disabled:opacity-40">
-          {running ? "분석 중…" : "분석하기"}
+          {running ? `분석 중… ${elapsed}s` : "분석하기"}
         </button>
       </header>
 
