@@ -1,14 +1,21 @@
 import json
+import logging
 from collections import Counter
 from datetime import date, datetime, timedelta
+from typing import Literal
 
+from openai import OpenAI
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session, joinedload
 
-from .models import (IntakeLog, Meal, MealItem, MetricDefinition, Profile,
-                     Supplement)
+from .config import settings
+from .models import (Analysis, EvidenceRef, IntakeLog, Meal, MealItem,
+                     MetricDefinition, NutrientLimit, Profile, Supplement)
 from .nutrition import NUTRIENT_KEYS
 from .routers.calendar import expand_schedules
 from .routers.metrics import latest_metrics_dict
+
+logger = logging.getLogger(__name__)
 
 
 def _sum_nutrients(items: list[MealItem]) -> dict:
@@ -84,15 +91,6 @@ def build_analysis_input(db: Session) -> dict:
         "active_symptoms": _active_symptoms(db, latest),
         "frequent_ingredients": _frequent_ingredients(db, now - timedelta(days=90)),
     }
-
-
-from typing import Literal
-
-from openai import OpenAI
-from pydantic import BaseModel, field_validator
-
-from .config import settings
-from .models import Analysis, EvidenceRef, NutrientLimit
 
 
 class AnalysisError(Exception):
@@ -222,6 +220,7 @@ def run_analysis(db: Session, trigger: str) -> Analysis:
             break
         except Exception as exc:  # bad JSON, schema violation, bad citation, network error
             last_error = str(exc)
+            logger.warning("analysis attempt failed", exc_info=True)
 
     if result is None:
         raise AnalysisError(f"분석 결과 검증에 실패했습니다: {last_error}")
