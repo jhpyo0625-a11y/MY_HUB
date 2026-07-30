@@ -199,5 +199,16 @@ def test_run_endpoint_resolves_evidence(auth_client, db_session_factory, monkeyp
     assert ev["type"] == "KDRI"
 
 
+def test_top3_allows_one_action_rejects_zero():
+    import pytest
+    from app.analysis import Top3Entry
+    # 1 action is accepted (relaxed from 3 for free-tier reliability)
+    Top3Entry(nutrient="비타민D", why="부족",
+              actions=[{"type": "food", "text": "연어"}], evidence_ids=[1])
+    # 0 actions still rejected
+    with pytest.raises(Exception):
+        Top3Entry(nutrient="비타민D", why="부족", actions=[], evidence_ids=[1])
+
+
 def test_analysis_requires_auth(client):
     assert client.get("/api/analysis").status_code == 401

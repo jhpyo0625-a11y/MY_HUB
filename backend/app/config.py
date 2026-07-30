@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     openai_base_url: str = ""
     # Per-request timeout (seconds) for each LLM HTTP call, so a hung or queued
     # provider connection fails fast instead of tying up the request for minutes.
-    openai_timeout: float = 240.0
+    openai_timeout: float = 60.0
     openai_model_mini: str = "gpt-5-mini"
     openai_model_strong: str = "gpt-5"
 

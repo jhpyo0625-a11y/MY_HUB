@@ -115,8 +115,10 @@ class Top3Entry(BaseModel):
     @field_validator("actions")
     @classmethod
     def _min_actions(cls, v: list[ActionOut]) -> list[ActionOut]:
-        if len(v) < 3:
-            raise ValueError("top3 entries need at least 3 actions")
+        # Prompt asks for 3; accept 1-3 so a usable report isn't rejected when a
+        # (free-tier) model returns fewer — a short report beats a 502.
+        if len(v) < 1:
+            raise ValueError("top3 entries need at least 1 action")
         return v
 
 
@@ -167,7 +169,7 @@ _SCHEMA_HINT = (
     '"excesses": [...동일 구조...], '
     '"top3": [{"nutrient": str, "why": str, '
     '"actions": [{"type": "food|recipe|habit", "text": str, "portion"?: str, '
-    '"uses_frequent_ingredients"?: bool}] (최소 3개), '
+    '"uses_frequent_ingredients"?: bool}] (가능하면 3개, 최소 1개), '
     '"evidence_ids": [int]}] (최대 3개), '
     '"missing_data": [{"metric_code": str, "why_it_matters": str}]}'
 )
