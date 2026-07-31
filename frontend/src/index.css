@@ -6,10 +6,21 @@
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+html, body {
+  overscroll-behavior-y: contain;
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* iPhone home-indicator clearance for the fixed bottom tab bar.
+   # ponytail: only covers the tab bar; extend to modals/sheets if any
+   grow to the screen edge later. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* One gentle staggered reveal on load — tasteful for a health app, not flashy. */

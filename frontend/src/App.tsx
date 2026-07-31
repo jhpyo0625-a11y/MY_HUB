@@ -6,6 +6,7 @@ import SupplementsPage from "./pages/SupplementsPage";
 import ReportPage from "./pages/ReportPage";
 import DashboardPage from "./pages/DashboardPage";
 import ChatPage from "./pages/ChatPage";
+import InstallPrompt from "./InstallPrompt";
 
 const TABS = [
   { to: "/dashboard", label: "대시보드", icon: "🏠" },
@@ -18,7 +19,7 @@ const TABS = [
 
 function TabBar() {
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur border-t border-stone-200">
+    <nav className="safe-bottom fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur border-t border-stone-200">
       <div className="max-w-lg mx-auto flex">
         {TABS.map((t) => (
           <NavLink
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/report" element={<ReportPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        <InstallPrompt />
         <TabBar />
       </div>
     </BrowserRouter>
