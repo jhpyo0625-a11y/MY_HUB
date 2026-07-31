@@ -229,3 +229,13 @@ def run_analysis(db: Session, trigger: str) -> Analysis:
     db.add(analysis)
     db.commit()
     return analysis
+
+
+def run_scheduled_analysis(db: Session) -> Analysis | None:
+    """Weekly cron entry point — never raises, so a bad LLM response or
+    provider outage can't crash the background scheduler thread."""
+    try:
+        return run_analysis(db, trigger="weekly")
+    except AnalysisError:
+        logger.warning("weekly scheduled analysis failed", exc_info=True)
+        return None

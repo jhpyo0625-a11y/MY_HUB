@@ -212,3 +212,24 @@ def test_top3_allows_one_action_rejects_zero():
 
 def test_analysis_requires_auth(client):
     assert client.get("/api/analysis").status_code == 401
+
+
+def test_run_scheduled_analysis_success(db_session_factory, monkeypatch):
+    from app import analysis
+    db = _seed_evidence(db_session_factory)
+    monkeypatch.setattr(analysis, "OpenAI", _fake_client([GOOD_RESULT]))
+    monkeypatch.setattr(analysis.settings, "openai_api_key", "test-key")
+
+    result = analysis.run_scheduled_analysis(db)
+    assert result is not None
+    assert result.trigger == "weekly"
+
+
+def test_run_scheduled_analysis_swallows_failure(db_session_factory, monkeypatch):
+    from app import analysis
+    db = _seed_evidence(db_session_factory)
+    bad = {**GOOD_RESULT, "top3": [{**GOOD_RESULT["top3"][0], "evidence_ids": [999]}]}
+    monkeypatch.setattr(analysis, "OpenAI", _fake_client([bad, bad]))
+    monkeypatch.setattr(analysis.settings, "openai_api_key", "test-key")
+
+    assert analysis.run_scheduled_analysis(db) is None

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -7,6 +8,7 @@ from fastapi import FastAPI
 from .config import settings
 from .db import init_db
 
+logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
 
@@ -16,6 +18,16 @@ def _reminder_tick() -> None:
     db = SessionLocal()
     try:
         check_and_send_reminders(db, datetime.now())
+    finally:
+        db.close()
+
+
+def _weekly_analysis_tick() -> None:
+    from .analysis import run_scheduled_analysis
+    from .db import SessionLocal
+    db = SessionLocal()
+    try:
+        run_scheduled_analysis(db)
     finally:
         db.close()
 
@@ -35,6 +47,8 @@ async def lifespan(app: FastAPI):
 
     scheduler.add_job(_reminder_tick, "interval", minutes=1, id="reminder_tick",
                       replace_existing=True)
+    scheduler.add_job(_weekly_analysis_tick, "cron", day_of_week="mon", hour=8,
+                      minute=0, id="weekly_analysis", replace_existing=True)
     scheduler.start()
     yield
     scheduler.shutdown(wait=False)
