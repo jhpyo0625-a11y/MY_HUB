@@ -63,3 +63,10 @@ def test_put_missing_supplement_404(auth_client):
 
 def test_supplements_require_auth(client):
     assert client.get("/api/supplements").status_code == 401
+
+
+def test_supplement_photo_path_roundtrip(auth_client):
+    body = dict(SUPP, photo_path="label123.jpg")
+    auth_client.post("/api/supplements", json=body)
+    supp = auth_client.get("/api/supplements").json()[0]
+    assert supp["photo_path"] == "label123.jpg"

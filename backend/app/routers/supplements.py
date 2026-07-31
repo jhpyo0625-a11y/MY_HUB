@@ -28,6 +28,7 @@ class SupplementIn(BaseModel):
     brand: str = ""
     product_name: str
     serving_size: str = ""
+    photo_path: str | None = None
     ingredients: list[IngredientIn] = []
     schedules: list[ScheduleIn] = []
 
@@ -36,6 +37,7 @@ def supp_to_dict(s: Supplement) -> dict:
     return {
         "id": s.id, "brand": s.brand, "product_name": s.product_name,
         "serving_size": s.serving_size, "active": s.active,
+        "photo_path": s.photo_path,
         "ingredients": [{"id": i.id, "ingredient_code": i.ingredient_code,
                          "amount": i.amount, "unit": i.unit}
                         for i in s.ingredients],
@@ -49,6 +51,7 @@ def _apply(s: Supplement, body: SupplementIn) -> None:
     # ponytail: schedule replacement orphans old intake logs (SQLite has no FK
     # enforcement here) — revisit if adherence stats (Phase 2) need them
     s.brand, s.product_name, s.serving_size = body.brand, body.product_name, body.serving_size
+    s.photo_path = body.photo_path
     s.ingredients = [SupplementIngredient(**i.model_dump()) for i in body.ingredients]
     s.schedules = [SupplementSchedule(**sc.model_dump()) for sc in body.schedules]
 

@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import { PhotoUploadButton, photoUrl } from "../PhotoUpload";
 
 interface MealItemOut { id: number; name: string; amount: string; nutrient_source: string; }
-interface MealOut { id: number; eaten_at: string; dish_name: string; items: MealItemOut[]; }
+interface MealOut {
+  id: number; eaten_at: string; dish_name: string;
+  photo_path: string | null; items: MealItemOut[];
+}
+interface MealExtract { dish_name?: string; items?: { name: string; amount: string }[]; }
+interface LabelExtract {
+  name?: string; amount?: string; nutrients?: Record<string, number | null>;
+}
 interface Slot {
   date: string; time: string; schedule_id: number; supplement_id: number;
   supplement_name: string; servings: number; status: "taken" | "skipped" | "pending";
@@ -26,8 +34,36 @@ function rangeFor(view: View, anchor: Date): [Date, Date] {
 function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
   const [dish, setDish] = useState("");
   const [time, setTime] = useState("12:00");
-  const [items, setItems] = useState([{ name: "", amount: "" }]);
+  const [items, setItems] = useState<
+    { name: string; amount: string; nutrients?: Record<string, number | null> }[]
+  >([{ name: "", amount: "" }]);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  function applyMealExtract(result: {
+    photo_path: string; extracted: MealExtract | null; error: string | null;
+  }) {
+    setPhotoPath(result.photo_path);
+    if (result.extracted) {
+      if (result.extracted.dish_name) setDish(result.extracted.dish_name);
+      if (result.extracted.items?.length) setItems(result.extracted.items);
+    }
+    setNotice(result.error ? `사진은 저장했지만 자동 인식은 실패했어요: ${result.error}` : null);
+  }
+
+  function applyLabelExtract(result: {
+    extracted: LabelExtract | null; error: string | null;
+  }) {
+    if (result.extracted) {
+      const extracted = result.extracted;
+      setItems((prev) => [...prev.filter((i) => i.name.trim()), {
+        name: extracted.name || "", amount: extracted.amount || "",
+        nutrients: extracted.nutrients,
+      }]);
+    }
+    setNotice(result.error ? `영양정보표 인식 실패: ${result.error}` : null);
+  }
 
   async function save() {
     setSaving(true);
@@ -37,6 +73,7 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
         body: JSON.stringify({
           eaten_at: `${date}T${time}:00`,
           dish_name: dish,
+          photo_path: photoPath,
           items: items.filter((i) => i.name.trim()),
         }),
       });
@@ -48,6 +85,14 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
 
   return (
     <div className="space-y-3 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm shadow-slate-200/50">
+      <div className="flex gap-2">
+        <PhotoUploadButton kind="meal" label="음식 사진" onExtracted={applyMealExtract} />
+        <PhotoUploadButton kind="nutrition_label" label="영양정보표" onExtracted={applyLabelExtract} />
+      </div>
+      {notice && <p className="text-xs text-amber-600">{notice}</p>}
+      {photoPath && (
+        <img src={photoUrl(photoPath)} className="h-24 w-24 rounded-lg object-cover" />
+      )}
       <div className="flex gap-2">
         <input value={dish} onChange={(e) => setDish(e.target.value)}
                placeholder="음식 이름 (예: 김치찌개)"
@@ -139,6 +184,9 @@ function DayDetail({ date, meals, slots, reload }: {
               <p className="mt-1 text-xs text-slate-500">
                 {m.items.map((i) => `${i.name}${i.nutrient_source === "ai_estimate" ? "*" : ""}`).join(", ")}
               </p>
+            )}
+            {m.photo_path && (
+              <img src={photoUrl(m.photo_path)} className="mt-2 h-16 w-16 rounded-lg object-cover" />
             )}
           </div>
         ))}

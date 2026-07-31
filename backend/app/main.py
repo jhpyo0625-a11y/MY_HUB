@@ -1,9 +1,23 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 
 from .config import settings
 from .db import init_db
+
+scheduler = BackgroundScheduler()
+
+
+def _reminder_tick() -> None:
+    from .db import SessionLocal
+    from .reminders import check_and_send_reminders
+    db = SessionLocal()
+    try:
+        check_and_send_reminders(db, datetime.now())
+    finally:
+        db.close()
 
 
 @asynccontextmanager
@@ -19,7 +33,11 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
+    scheduler.add_job(_reminder_tick, "interval", minutes=1, id="reminder_tick",
+                      replace_existing=True)
+    scheduler.start()
     yield
+    scheduler.shutdown(wait=False)
 
 
 def create_app() -> FastAPI:
@@ -41,13 +59,16 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(auth.profile_router)
 
-    from .routers import analysis, calendar, meals, metrics, safety, supplements
+    from .routers import analysis, calendar, chat, meals, metrics, photos, push, safety, supplements
     app.include_router(meals.router)
     app.include_router(metrics.router)
     app.include_router(supplements.router)
     app.include_router(calendar.router)
     app.include_router(safety.router)
     app.include_router(analysis.router)
+    app.include_router(photos.router)
+    app.include_router(chat.router)
+    app.include_router(push.router)
 
     @app.get("/api/health")
     def health():

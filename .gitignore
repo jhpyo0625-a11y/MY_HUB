@@ -2,8 +2,10 @@
 __pycache__/
 *.pyc
 data/
+qa-data/
 node_modules/
 frontend/dist/
 .env
 .gstack/
 Screenshot*.png
+.superpowers/

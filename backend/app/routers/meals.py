@@ -17,12 +17,14 @@ router = APIRouter(prefix="/api/meals", tags=["meals"],
 class MealItemIn(BaseModel):
     name: str
     amount: str = ""
+    nutrients: dict | None = None  # pre-filled from nutrition-label photo extraction
 
 
 class MealIn(BaseModel):
     eaten_at: datetime
     dish_name: str
     note: str | None = None
+    photo_path: str | None = None
     items: list[MealItemIn] = []
 
 
@@ -32,6 +34,7 @@ def meal_to_dict(m: Meal) -> dict:
         "eaten_at": m.eaten_at.isoformat(),
         "dish_name": m.dish_name,
         "note": m.note,
+        "photo_path": m.photo_path,
         "items": [{
             "id": i.id, "name": i.name, "amount": i.amount,
             "nutrients": json.loads(i.nutrients) if i.nutrients else None,
@@ -42,10 +45,14 @@ def meal_to_dict(m: Meal) -> dict:
 
 @router.post("", status_code=201)
 def create_meal(body: MealIn, db: Session = Depends(get_db)):
-    meal = Meal(eaten_at=body.eaten_at, dish_name=body.dish_name, note=body.note)
+    meal = Meal(eaten_at=body.eaten_at, dish_name=body.dish_name, note=body.note,
+               photo_path=body.photo_path)
     # ponytail: sync resolution; move to background task if saving feels slow
     for it in body.items:
-        values, source = resolve_nutrients(it.name, it.amount)
+        if it.nutrients is not None:
+            values, source = it.nutrients, "photo"
+        else:
+            values, source = resolve_nutrients(it.name, it.amount)
         meal.items.append(MealItem(
             name=it.name, amount=it.amount,
             nutrients=json.dumps(values) if values else None,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { Top3Card, type AnalysisDetail } from "./ReportPage";
+import { disablePush, enablePush, getPushSubscription } from "../push";
 
 interface Warning {
   type: string; ingredient_code?: string; ingredient_codes?: string[]; message: string;
@@ -85,6 +86,43 @@ function MissingDataCard({ item, def, onSaved }: {
   );
 }
 
+function PushCard() {
+  const [enabled, setEnabled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getPushSubscription().then((s) => setEnabled(!!s));
+  }, []);
+
+  async function toggle() {
+    setBusy(true);
+    setError(null);
+    try {
+      if (enabled) { await disablePush(); setEnabled(false); }
+      else { await enablePush(); setEnabled(true); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "오류가 발생했어요");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-sm shadow-slate-200/50">
+      <span className="text-lg">🔔</span>
+      <span className="text-sm text-slate-700">복용 알림</span>
+      <button onClick={toggle} disabled={busy}
+              className={`ml-auto rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                enabled ? "bg-emerald-500 text-white" : "border border-slate-300 text-slate-600"
+              }`}>
+        {busy ? "처리 중…" : enabled ? "켜짐" : "꺼짐"}
+      </button>
+      {error && <p className="w-full text-xs text-rose-600">{error}</p>}
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const [detail, setDetail] = useState<AnalysisDetail | null>(null);
   const [warnings, setWarnings] = useState<Warning[]>([]);
@@ -119,6 +157,8 @@ export default function DashboardPage() {
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-teal-700/60">Today</p>
         <h1 className="mt-1 font-display text-3xl font-extrabold leading-none text-slate-900">대시보드</h1>
       </header>
+
+      <PushCard />
 
       {warnings.length > 0 && (
         <section className="space-y-2">
