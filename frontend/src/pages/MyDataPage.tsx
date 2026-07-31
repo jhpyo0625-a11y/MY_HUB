@@ -58,6 +58,7 @@ function MetricRow({ def, latest, onSaved }: {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && def.input_type !== "text")
@@ -66,6 +67,7 @@ function MetricRow({ def, latest, onSaved }: {
 
   async function save(valueNum: number | null, valueText: string | null) {
     setSaving(true);
+    setError(null);
     try {
       await api("/api/metrics/entries", {
         method: "POST",
@@ -77,6 +79,8 @@ function MetricRow({ def, latest, onSaved }: {
       onSaved();
       if (open && def.input_type !== "text")
         api<Entry[]>(`/api/metrics/entries?code=${def.code}`).then(setEntries);
+    } catch {
+      setError("저장에 실패했어요. 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }
@@ -137,6 +141,7 @@ function MetricRow({ def, latest, onSaved }: {
               </button>
             </div>
           )}
+          {error && <p className="text-sm text-rose-600">{error}</p>}
         </div>
       )}
     </div>
@@ -190,6 +195,7 @@ function LabResultUpload({ defs, onSaved }: { defs: MetricDef[]; onSaved: () => 
   const [entries, setEntries] = useState<LabEntry[] | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const defByCode = Object.fromEntries(defs.map((d) => [d.code, d]));
 
   function applyExtract(result: { extracted: LabExtract | null; error: string | null }) {
@@ -200,6 +206,7 @@ function LabResultUpload({ defs, onSaved }: { defs: MetricDef[]; onSaved: () => 
   async function save() {
     if (!entries?.length) return;
     setSaving(true);
+    setError(null);
     try {
       await api("/api/metrics/entries/bulk", {
         method: "POST",
@@ -207,6 +214,8 @@ function LabResultUpload({ defs, onSaved }: { defs: MetricDef[]; onSaved: () => 
       });
       setEntries(null);
       onSaved();
+    } catch {
+      setError("저장에 실패했어요. 값을 확인해주세요.");
     } finally {
       setSaving(false);
     }
@@ -236,6 +245,7 @@ function LabResultUpload({ defs, onSaved }: { defs: MetricDef[]; onSaved: () => 
                   className="w-full rounded-full bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-40">
             {saving ? "저장 중…" : `${entries.length}개 항목 저장`}
           </button>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
         </div>
       )}
     </section>

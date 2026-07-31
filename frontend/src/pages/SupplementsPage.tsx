@@ -36,6 +36,7 @@ function SuppForm({ initial, onSaved, onCancel }: {
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function applyExtract(result: {
     photo_path: string; extracted: LabelExtract | null; error: string | null;
@@ -66,6 +67,7 @@ function SuppForm({ initial, onSaved, onCancel }: {
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
       const body = JSON.stringify({
         ...form,
@@ -76,6 +78,8 @@ function SuppForm({ initial, onSaved, onCancel }: {
         await api(`/api/supplements/${form.id}`, { method: "PUT", body });
       else await api("/api/supplements", { method: "POST", body });
       onSaved();
+    } catch {
+      setError("저장에 실패했어요. 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }
@@ -160,6 +164,7 @@ function SuppForm({ initial, onSaved, onCancel }: {
           저장
         </button>
       </div>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   );
 }

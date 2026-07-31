@@ -1,8 +1,15 @@
 def test_subscribe_and_unsubscribe(auth_client):
-    sub = {"endpoint": "https://push.example.com/abc",
+    sub = {"endpoint": "https://fcm.googleapis.com/fcm/send/abc",
            "keys": {"p256dh": "key1", "auth": "key2"}}
     assert auth_client.post("/api/push/subscribe", json={"subscription": sub}).status_code == 200
     assert auth_client.delete("/api/push/subscribe").status_code == 200
+
+
+def test_subscribe_rejects_unknown_push_host(auth_client):
+    sub = {"endpoint": "https://attacker.example.com/internal",
+           "keys": {"p256dh": "key1", "auth": "key2"}}
+    res = auth_client.post("/api/push/subscribe", json={"subscription": sub})
+    assert res.status_code == 422
 
 
 def test_vapid_public_key_endpoint(auth_client, monkeypatch):
@@ -19,7 +26,8 @@ def test_push_requires_auth(client):
 def test_send_push_success(db_session_factory, monkeypatch):
     from app import push
     db = db_session_factory()
-    push.subscribe(db, {"endpoint": "https://x", "keys": {"p256dh": "a", "auth": "b"}})
+    push.subscribe(db, {"endpoint": "https://fcm.googleapis.com/fcm/send/x",
+                        "keys": {"p256dh": "a", "auth": "b"}})
 
     calls = {}
     def fake_webpush(**kw):
@@ -28,7 +36,8 @@ def test_send_push_success(db_session_factory, monkeypatch):
 
     ok = push.send_push(db, {"title": "t", "body": "b"})
     assert ok is True
-    assert calls["subscription_info"]["endpoint"] == "https://x"
+    assert calls["subscription_info"]["endpoint"] == "https://fcm.googleapis.com/fcm/send/x"
+    assert calls["timeout"] == push._PUSH_TIMEOUT
 
 
 def test_send_push_no_subscription_returns_false(db_session_factory):
@@ -41,7 +50,8 @@ def test_send_push_gone_clears_subscription(db_session_factory, monkeypatch):
     from app import push
     from pywebpush import WebPushException
     db = db_session_factory()
-    push.subscribe(db, {"endpoint": "https://x", "keys": {"p256dh": "a", "auth": "b"}})
+    push.subscribe(db, {"endpoint": "https://fcm.googleapis.com/fcm/send/x",
+                        "keys": {"p256dh": "a", "auth": "b"}})
 
     class FakeResponse:
         status_code = 410

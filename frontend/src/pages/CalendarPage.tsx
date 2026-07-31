@@ -40,6 +40,7 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function applyMealExtract(result: {
     photo_path: string; extracted: MealExtract | null; error: string | null;
@@ -67,6 +68,7 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
       await api("/api/meals", {
         method: "POST",
@@ -78,6 +80,8 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
         }),
       });
       onDone();
+    } catch {
+      setError("저장에 실패했어요. 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }
@@ -118,6 +122,7 @@ function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
           {saving ? "영양성분 계산 중…" : "저장"}
         </button>
       </div>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   );
 }
