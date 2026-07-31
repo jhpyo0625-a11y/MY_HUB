@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -22,7 +22,10 @@ class SubscribeIn(BaseModel):
 
 @router.post("/subscribe")
 def do_subscribe(body: SubscribeIn, db: Session = Depends(get_db)):
-    subscribe(db, body.subscription)
+    try:
+        subscribe(db, body.subscription)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
     return {"ok": True}
 
 

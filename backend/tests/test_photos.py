@@ -28,9 +28,10 @@ def test_extract_supplement_label(auth_client, monkeypatch, tmp_path):
                "ingredients": [{"ingredient_code": "omega3", "amount": 1000, "unit": "mg"}]}
     monkeypatch.setattr(photo_extraction, "OpenAI", _fake_client(payload))
 
+    jpeg_bytes = b"\xff\xd8\xff\xe0fake-jpeg-bytes"
     res = auth_client.post("/api/photos/extract",
                            data={"kind": "supplement_label"},
-                           files={"file": ("label.jpg", io.BytesIO(b"fake-bytes"), "image/jpeg")})
+                           files={"file": ("label.jpg", io.BytesIO(jpeg_bytes), "image/jpeg")})
     assert res.status_code == 200
     body = res.json()
     assert body["extracted"]["product_name"] == "오메가3"
@@ -39,7 +40,7 @@ def test_extract_supplement_label(auth_client, monkeypatch, tmp_path):
 
     photo_res = auth_client.get(f"/api/photos/{body['photo_path']}")
     assert photo_res.status_code == 200
-    assert photo_res.content == b"fake-bytes"
+    assert photo_res.content == jpeg_bytes
 
 
 def test_extract_unknown_kind_rejected(auth_client):
@@ -74,13 +75,29 @@ def test_extract_llm_failure_still_saves_photo(auth_client, monkeypatch, tmp_pat
     with caplog.at_level("WARNING"):
         res = auth_client.post("/api/photos/extract",
                                data={"kind": "meal"},
-                               files={"file": ("m.jpg", io.BytesIO(b"data"), "image/jpeg")})
+                               files={"file": ("m.jpg", io.BytesIO(b"\xff\xd8\xff\xe0data"), "image/jpeg")})
     assert res.status_code == 200
     body = res.json()
     assert body["extracted"] is None
     assert "vision API down" in body["error"]
     assert body["photo_path"]
     assert "photo extraction failed" in caplog.text
+
+
+def test_extract_rejects_mismatched_image_bytes(auth_client):
+    res = auth_client.post("/api/photos/extract",
+                           data={"kind": "meal"},
+                           files={"file": ("m.jpg", io.BytesIO(b"not-a-real-jpeg"), "image/jpeg")})
+    assert res.status_code == 422
+
+
+def test_extract_rejects_oversized_upload(auth_client):
+    from app.routers import photos as photos_module
+    oversized = b"\xff\xd8\xff\xe0" + b"0" * (photos_module.MAX_PHOTO_BYTES + 1)
+    res = auth_client.post("/api/photos/extract",
+                           data={"kind": "meal"},
+                           files={"file": ("m.jpg", io.BytesIO(oversized), "image/jpeg")})
+    assert res.status_code == 413
 
 
 def test_photo_not_found(auth_client):
