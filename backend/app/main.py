@@ -32,6 +32,14 @@ def _weekly_analysis_tick() -> None:
         db.close()
 
 
+def _backup_tick() -> None:
+    from .backup import backup_db
+    try:
+        backup_db()
+    except Exception:
+        logger.warning("db backup failed", exc_info=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -49,6 +57,8 @@ async def lifespan(app: FastAPI):
                       replace_existing=True)
     scheduler.add_job(_weekly_analysis_tick, "cron", day_of_week="mon", hour=8,
                       minute=0, id="weekly_analysis", replace_existing=True)
+    scheduler.add_job(_backup_tick, "cron", hour=3, minute=0, id="db_backup",
+                      replace_existing=True)
     scheduler.start()
     yield
     scheduler.shutdown(wait=False)
